@@ -1,0 +1,241 @@
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/subjects.css' %}">
+{% endblock %}
+
+{% block content %}
+<!--
+    NOTE: This is a CONTENT-ONLY fragment.
+    It is designed to be rendered inside the existing dashboard layout's
+    <main class="page-content"> ... </main> region (sidebar + navbar
+    from teacher_dashboard.html / base.html are not repeated here).
+-->
+
+<div class="page-heading page-heading-row">
+    <div>
+        <h2 class="page-title">Subjects</h2>
+        <p class="page-subtitle">Manage all the subjects assigned to you.</p>
+    </div>
+
+    <button type="button" class="btn-primary btn-add-subject">
+        <span class="btn-icon" aria-hidden="true">+</span>
+        Add Subject
+    </button>
+</div>
+
+<!-- ================= SUBJECTS GRID ================= -->
+<section class="subjects-grid" aria-label="Subjects list">
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Database Management System</h3>
+                <span class="subject-code">CSE301</span>
+            </div>
+            <span class="semester-badge">Sem 5</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">120</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">8</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true"></span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true"></span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Operating Systems</h3>
+                <span class="subject-code">CSE302</span>
+            </div>
+            <span class="semester-badge">Sem 5</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">85</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">4</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true"></span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true"></span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Computer Networks</h3>
+                <span class="subject-code">CSE303</span>
+            </div>
+            <span class="semester-badge">Sem 5</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">92</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">6</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true"></span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true"></span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Machine Learning</h3>
+                <span class="subject-code">CSE401</span>
+            </div>
+            <span class="semester-badge">Sem 6</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">60</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">3</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true"></span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true"></span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Software Engineering</h3>
+                <span class="subject-code">CSE304</span>
+            </div>
+            <span class="semester-badge">Sem 5</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">74</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">5</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true">✏</span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true"></span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+    <article class="subject-card">
+        <div class="subject-card-top">
+            <div class="subject-icon" aria-hidden="true"></div>
+            <div class="subject-heading">
+                <h3 class="subject-name">Artificial Intelligence</h3>
+                <span class="subject-code">CSE402</span>
+            </div>
+            <span class="semester-badge">Sem 6</span>
+        </div>
+
+        <div class="subject-stats">
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Questions</span>
+                <span class="subject-stat-value">110</span>
+            </div>
+            <div class="subject-stat-box">
+                <span class="subject-stat-icon" aria-hidden="true"></span>
+                <span class="subject-stat-label">Tests</span>
+                <span class="subject-stat-value">7</span>
+            </div>
+        </div>
+
+        <div class="subject-actions">
+            <button type="button" class="btn-outline">
+                <span aria-hidden="true">✏</span> Edit Subject
+            </button>
+            <button type="button" class="btn-outline btn-outline-danger">
+                <span aria-hidden="true">🗑</span> Delete Subject
+            </button>
+        </div>
+    </article>
+
+</section>
+
+<!--
+    ================= EMPTY STATE =================
+    Shown instead of .subjects-grid when no subjects exist.
+    Kept as plain HTML here for reference / future conditional use,
+    e.g. {% if subjects %} ... {% else %} (this block) {% endif %}
+-->
+<section class="empty-state-container" aria-label="No subjects found">
+    <div class="empty-state-icon" aria-hidden="true"></div>
+    <h3 class="empty-state-title">No Subjects Found</h3>
+    <p class="empty-state-text">Click "Add Subject" to create your first subject.</p>
+</section>
+{% endblock %}

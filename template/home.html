@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Management System</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+
+    <main class="home-page">
+        <div class="home-card">
+
+            <div class="home-brand">
+                <div class="home-logo" aria-hidden="true">
+                    <span class="home-logo-mark">EMS</span>
+                </div>
+                <h1 class="home-title">Exam Management System</h1>
+                <p class="home-subtitle">AI-powered platform for creating, managing, and analyzing examinations.</p>
+            </div>
+
+            <div class="feature-grid">
+
+                <div class="feature-card">
+                    <div class="feature-icon" aria-hidden="true"></div>
+                    <h2 class="feature-title">Create &amp; Manage Exams</h2>
+                    <ul class="feature-list">
+                        <li>Question Bank</li>
+                        <li>AI Question Generation</li>
+                        <li>Test Scheduling</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon" aria-hidden="true"></div>
+                    <h2 class="feature-title">Analyze Student Performance</h2>
+                    <ul class="feature-list">
+                        <li>Detailed Reports</li>
+                        <li>Topic-wise Analysis</li>
+                        <li>Performance Dashboard</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="home-action">
+                <a href="{% url 'login' %}" class="btn-primary">Go to Login</a>
+            </div>
+
+        </div>
+
+        <footer class="home-footer">
+            <p>&copy; 2026 Exam Management System</p>
+        </footer>
+    </main>
+
+</body>
+</html>

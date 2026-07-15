@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Exam Management System</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+
+    <main class="auth-page">
+        <div class="auth-card">
+
+            <div class="auth-brand">
+                <div class="auth-logo" aria-hidden="true">
+                    <span class="auth-logo-mark">EMS</span>
+                </div>
+                <h1 class="auth-title">Exam Management System</h1>
+                <p class="auth-subtitle">Sign in to continue</p>
+            </div>
+
+            <form class="auth-form" action="#" method="post" novalidate>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="password-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <span class="password-toggle-icon" role="img" aria-label="Show or hide password">
+                            <!-- eye icon placeholder (JS to be added later) -->
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember" name="remember" class="checkbox-input">
+                        <span>Remember me</span>
+                    </label>
+
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <a href="{% url 'teacher_dashboard' %}" class="login-btn">
+                    Login
+                </a>
+
+            </form>
+
+        </div>
+
+        <footer class="auth-footer">
+            <p>&copy; 2026 Exam Management System</p>
+        </footer>
+    </main>
+
+</body>
+</html>
