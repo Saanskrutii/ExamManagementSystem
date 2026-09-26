@@ -1,0 +1,83 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_title %}Enter Exam{% endblock %}
+{% block navbar_title %}Exam Access Gate{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verify-card {
+        background: #ffffff;
+        border-radius: 12px;
+        max-width: 500px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin: 40px auto;
+        text-align: center;
+    }
+    .form-group {
+        margin-top: 24px;
+        margin-bottom: 20px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        box-sizing: border-box;
+        text-align: center;
+        letter-spacing: 2px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .exam-badge-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-card">
+    <div class="exam-badge-icon">🔐</div>
+    
+    <h2 style="margin-top: 0; margin-bottom: 8px; font-size: 1.35rem; color: #0f172a;">{{ exam.title }}</h2>
+    <p style="color: #64748b; font-size: 0.9rem; margin-top: 0;">Subject: {{ exam.subject_name }}</p>
+
+    {# ── System Messages ── #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="padding: 10px 14px; border-radius: 6px; margin: 16px 0; background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.85rem; font-weight: 500;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px; text-align: left; font-size: 0.875rem;">
+        ⏱ Duration: <strong style="color: #0f172a;">{{ exam.duration_minutes }} Minutes</strong><br>
+        📊 Passing Marks: <strong style="color: #0f172a;">{{ exam.passing_marks }} Marks</strong><br>
+        📝 Questions: <strong style="color: #0f172a;">{{ exam.question_ids|length }} Questions</strong>
+    </div>
+
+    <form action="{% url 'verify_exam_code' exam.id %}" method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="accessCodeInput" class="form-label" style="font-weight: 600; display: block; margin-bottom: 10px; color: #475569; font-size: 0.95rem;">Enter Exam Access Code *</label>
+            <input type="text" name="access_code" id="accessCodeInput" class="form-input" placeholder="CODE123" required autocomplete="off">
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+            <a href="{% url 'student_dashboard' %}" class="btn-outline" style="text-decoration: none; padding: 12px 20px; display: inline-block;">Cancel</a>
+            <button type="submit" class="btn-primary" style="padding: 12px 24px; font-weight: 600;">Unlock & Start Attempt 🚀</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

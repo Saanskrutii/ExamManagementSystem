@@ -1,0 +1,529 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ exam.title }} | Exam Arena</title>
+    <link rel="stylesheet" href="{% static 'css/basedashboard.css' %}">
+    <style>
+        .exam-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .exam-header-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .timer-box {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .question-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            /* Visibility controlled by JS via element.style.display */
+        }
+        .question-card.active {
+            display: block;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .option-label:hover {
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+        }
+        .option-label input[type="radio"]:checked + span {
+            color: #2563eb;
+        }
+        .option-label.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .palette-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            height: 40px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .palette-btn.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+        }
+        .palette-btn.answered {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #22c55e;
+        }
+        /* ── Anti-Cheat Proctoring Overlay ─────────────────────────── */
+        .proctor-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.92);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            color: #fff;
+        }
+        .proctor-overlay.show {
+            display: flex;
+        }
+        .proctor-overlay .proctor-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .proctor-overlay h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ef4444;
+        }
+        .proctor-overlay p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            max-width: 440px;
+        }
+        .proctor-overlay .proctor-count {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ef4444;
+            margin-bottom: 4px;
+        }
+        .proctor-overlay .proctor-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 24px;
+        }
+        .proctor-resume-btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .proctor-warning-badge {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            margin-left: 12px;
+            display: none;
+        }
+    </style>
+</head>
+<body style="background: #f8fafc;">
+
+    <!-- ── Anti-Cheat Proctoring Warning Overlay ─────────────────────── -->
+    <div class="proctor-overlay" id="proctorOverlay">
+        <div class="proctor-icon">🚨</div>
+        <h2>Suspicious Activity Detected</h2>
+        <p id="proctorMessage">You have navigated away from this exam window. This incident has been logged and will be reported to your teacher.</p>
+        <div class="proctor-count" id="proctorCount">1</div>
+        <div class="proctor-label">Violation(s) Recorded — Auto-submit at 3</div>
+        <button class="proctor-resume-btn" onclick="resumeExam()">Return to Exam</button>
+    </div>
+
+    <!-- Sticky Header Bar -->
+    <header class="exam-header-bar">
+        <div>
+            <h1 style="margin: 0; font-size: 1.25rem;">{{ exam.title }}</h1>
+            <span style="font-size: 0.85rem; color: #94a3b8;">
+                🔒 Proctored Exam — Tab switching, copy-paste & right-click are monitored.
+                <span class="proctor-warning-badge" id="warningBadge">⚠ 0 Violations</span>
+            </span>
+        </div>
+        <div class="timer-box">
+            ⏱ <span id="examTimer">00:00</span>
+        </div>
+    </header>
+
+    <div class="exam-container">
+        <!-- Questions Form block -->
+        <main>
+            <form id="examForm" action="{% url 'submit_exam' exam.id %}" method="post">
+                {% csrf_token %}
+                <!-- Anti-cheat: violation log submitted alongside exam responses -->
+                <input type="hidden" id="proctorViolationsJson" name="proctor_violations_json" value="[]">
+
+                {% for q in questions %}
+                    <div class="question-card" id="qCard_{{ forloop.counter }}" data-q-index="{{ forloop.counter }}" style="display:none;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-weight: 700; color: #475569; font-size: 0.9rem;">QUESTION {{ forloop.counter }} OF {{ questions|length }}</span>
+                            <span style="font-size: 0.85rem; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{{ q.marks }} Mark{% if q.marks > 1 %}s{% endif %}</span>
+                        </div>
+
+                        <p style="font-size: 1.1rem; font-weight: 600; color: #0f172a; line-height: 1.6; margin-bottom: 24px;">
+                            {{ q.question_text }}
+                        </p>
+
+                        <!-- Answers Input depending on Question Type -->
+                        {% if q.question_type == "MCQ" %}
+                            <div class="options-block">
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="A" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span><strong>A:</strong> {{ q.option_a }}</span>
+                                </label>
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="B" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span><strong>B:</strong> {{ q.option_b }}</span>
+                                </label>
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="C" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span><strong>C:</strong> {{ q.option_c }}</span>
+                                </label>
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="D" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span><strong>D:</strong> {{ q.option_d }}</span>
+                                </label>
+                            </div>
+                        {% elif q.question_type == "TRUE_FALSE" %}
+                            <div class="options-block">
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="True" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span>True</span>
+                                </label>
+                                <label class="option-label" onclick="selectOption(this)">
+                                    <input type="radio" name="question_{{ q.id }}" value="False" style="margin: 0;" onchange="markAnswered({{ forloop.counter }})">
+                                    <span>False</span>
+                                </label>
+                            </div>
+                        {% else %}
+                            <!-- Descriptive text answer -->
+                            <div class="form-group">
+                                <textarea name="question_{{ q.id }}" class="form-input" rows="6" placeholder="Type your answer here..." style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:12px; font-size:0.95rem; resize:vertical;" oninput="markAnsweredText({{ forloop.counter }}, this.value)"></textarea>
+                            </div>
+                        {% endif %}
+
+                    </div>
+                {% endfor %}
+
+                <!-- Hidden payload for question-wise time tracking -->
+                <input type="hidden" name="question_times_json" id="questionTimesJson" value="{}">
+
+                <!-- Footer Pagination Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <button type="button" class="btn-outline" id="prevBtn" onclick="navigate(-1)">← Previous</button>
+                    <button type="button" class="btn-outline" id="nextBtn" onclick="navigate(1)">Next →</button>
+                </div>
+            </form>
+        </main>
+
+        <!-- Sidebar Navigation Palette -->
+        <aside style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04); height: fit-content; position: sticky; top: 100px;">
+            <h3 style="margin-top: 0; font-size: 1rem; color: #1e293b;">Question Palette</h3>
+            
+            <div class="palette-grid">
+                {% for q in questions %}
+                    <button type="button" class="palette-btn" id="palBtn_{{ forloop.counter }}" onclick="jumpTo({{ forloop.counter }})">{{ forloop.counter }}</button>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                <button type="button" id="submitExamBtn" class="btn-primary" style="width: 100%; font-weight: 700; background: #ef4444; border-color: #ef4444;" onclick="submitExam()">
+                    Submit Examination 🚀
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Countdown Timer & Form Navigation JS -->
+    <script>
+        var currentQIndex = 1;
+        var totalQuestions = {{ questions|length }};
+        var remainingSeconds = {{ time_remaining_secs }};
+
+        // Question-wise time tracking dictionary
+        var questionIds = [{% for q in questions %}"{{ q.id }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+        var questionTimers = {};
+        questionIds.forEach(function(qid) { questionTimers[qid] = 0; });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Show first question
+            showQuestion(1);
+
+            // Track seconds spent on current active question every 1 sec
+            setInterval(function() {
+                var currentQId = questionIds[currentQIndex - 1];
+                if (currentQId) {
+                    questionTimers[currentQId] = (questionTimers[currentQId] || 0) + 1;
+                }
+            }, 1000);
+
+            // Start main exam countdown timer
+            var timerElement = document.getElementById("examTimer");
+            var countdown = setInterval(function() {
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdown);
+                    alert("Exam Time has expired. Your attempt will be automatically submitted.");
+                    prepareSubmission();
+                    document.getElementById("examForm").submit();
+                } else {
+                    remainingSeconds--;
+                    var hrs = Math.floor(remainingSeconds / 3600);
+                    var mins = Math.floor((remainingSeconds % 3600) / 60);
+                    var secs = remainingSeconds % 60;
+                    
+                    var timeStr = "";
+                    if (hrs > 0) timeStr += (hrs < 10 ? "0" + hrs : hrs) + ":";
+                    timeStr += (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
+                    timerElement.innerText = timeStr;
+                }
+            }, 1000);
+
+            // Block accidental form submit on Enter key press
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.nodeName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        function showQuestion(index) {
+            // Hide ALL cards via inline style (beats any external CSS)
+            var cards = document.querySelectorAll(".question-card");
+            cards.forEach(function(c) {
+                c.style.display = "none";
+                c.classList.remove("active");
+            });
+
+            // Show the target card
+            var activeCard = document.getElementById("qCard_" + index);
+            if (activeCard) {
+                activeCard.style.display = "block";
+                activeCard.classList.add("active");
+                currentQIndex = index;
+            }
+
+            // Update palette buttons active status
+            var palBtns = document.querySelectorAll(".palette-btn");
+            palBtns.forEach(function(b) { b.classList.remove("active"); });
+
+            var activePalBtn = document.getElementById("palBtn_" + index);
+            if (activePalBtn) activePalBtn.classList.add("active");
+
+            // Disable pagination buttons if at boundaries
+            document.getElementById("prevBtn").disabled = (index === 1);
+            document.getElementById("nextBtn").disabled = (index === totalQuestions);
+        }
+
+        function navigate(dir) {
+            var target = currentQIndex + dir;
+            if (target >= 1 && target <= totalQuestions) {
+                showQuestion(target);
+            }
+        }
+
+        function jumpTo(index) {
+            showQuestion(index);
+        }
+
+        function selectOption(labelElement) {
+            // Unselect sibling options in card
+            var siblings = labelElement.parentNode.querySelectorAll(".option-label");
+            siblings.forEach(s => s.classList.remove("selected"));
+
+            // Select clicked
+            labelElement.classList.add("selected");
+        }
+
+        function markAnswered(index) {
+            var palBtn = document.getElementById("palBtn_" + index);
+            if (palBtn) palBtn.classList.add("answered");
+        }
+
+        function markAnsweredText(index, value) {
+            var palBtn = document.getElementById("palBtn_" + index);
+            if (palBtn) {
+                if (value.trim().length > 0) {
+                    palBtn.classList.add("answered");
+                } else {
+                    palBtn.classList.remove("answered");
+                }
+            }
+        }
+
+        function prepareSubmission() {
+            var jsonInput = document.getElementById("questionTimesJson");
+            if (jsonInput) {
+                jsonInput.value = JSON.stringify(questionTimers);
+            }
+        }
+
+        function disableSubmitButton() {
+            var btn = document.getElementById("submitExamBtn");
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = "0.6";
+                btn.style.cursor = "not-allowed";
+                btn.innerText = "Submitting Exam... Please wait ⏳";
+            }
+        }
+
+        function submitExam() {
+            var btn = document.getElementById("submitExamBtn");
+            if (btn && btn.disabled) return;
+
+            if (confirm("Confirm Submission: Are you sure you want to end and submit your examination attempt?")) {
+                disableSubmitButton();
+                prepareSubmission();
+                document.getElementById("examForm").submit();
+            }
+        }
+
+        // Handle form submit event to prevent double submission
+        document.getElementById("examForm").addEventListener("submit", function(e) {
+            disableSubmitButton();
+            prepareSubmission();
+        });
+
+        // ── Anti-Cheat Proctoring Engine ──────────────────────────────────
+        const MAX_VIOLATIONS = 3;
+        let violationCount = 0;
+        let violationLog = [];
+        let proctorActive = true;
+
+        function recordViolation(type, detail) {
+            if (!proctorActive) return;
+            violationCount++;
+            const entry = {
+                violation_no: violationCount,
+                type: type,
+                detail: detail,
+                timestamp: new Date().toISOString(),
+                question_index: currentQIndex,
+            };
+            violationLog.push(entry);
+
+            // Persist to hidden form field so it's submitted with the attempt
+            const vjInput = document.getElementById("proctorViolationsJson");
+            if (vjInput) vjInput.value = JSON.stringify(violationLog);
+
+            // Update warning badge in header
+            const badge = document.getElementById("warningBadge");
+            if (badge) {
+                badge.style.display = "inline-block";
+                badge.innerText = "⚠ " + violationCount + " Violation" + (violationCount > 1 ? "s" : "");
+            }
+
+            // Show overlay
+            const overlay = document.getElementById("proctorOverlay");
+            document.getElementById("proctorCount").innerText = violationCount;
+            let msg = "You have navigated away from this exam window.";
+            if (type === "COPY_PASTE") msg = "Copy/paste action was detected and blocked.";
+            if (type === "RIGHT_CLICK") msg = "Right-click was disabled during the exam.";
+            document.getElementById("proctorMessage").innerText = msg + " Incident #" + violationCount + " logged and reported to your teacher.";
+            overlay.classList.add("show");
+
+            // Auto-submit at MAX_VIOLATIONS
+            if (violationCount >= MAX_VIOLATIONS) {
+                proctorActive = false;
+                overlay.querySelector(".proctor-resume-btn").style.display = "none";
+                document.getElementById("proctorMessage").innerText =
+                    "Maximum violations reached. Your exam is being auto-submitted with all recorded violations.";
+                setTimeout(function() {
+                    prepareSubmission();
+                    document.getElementById("examForm").submit();
+                }, 2500);
+            }
+        }
+
+        function resumeExam() {
+            document.getElementById("proctorOverlay").classList.remove("show");
+        }
+
+        // 1. Page Visibility API — detects tab switching / minimising browser
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) {
+                recordViolation("TAB_SWITCH", "Student navigated away from exam tab.");
+            }
+        });
+
+        // 2. Window blur — detects switching to another application
+        window.addEventListener("blur", function() {
+            recordViolation("WINDOW_BLUR", "Exam window lost focus — possible external application switch.");
+        });
+
+        // 3. Disable right-click
+        document.addEventListener("contextmenu", function(e) {
+            e.preventDefault();
+            recordViolation("RIGHT_CLICK", "Right-click menu access attempted.");
+        });
+
+        // 4. Disable copy / paste / cut
+        ["copy", "cut", "paste"].forEach(function(evt) {
+            document.addEventListener(evt, function(e) {
+                e.preventDefault();
+                recordViolation("COPY_PASTE", "Clipboard action '" + evt + "' was attempted and blocked.");
+            });
+        });
+        // ── End Anti-Cheat Engine ─────────────────────────────────────────
+    </script>
+</body>
+</html>

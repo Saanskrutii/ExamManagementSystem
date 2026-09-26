@@ -1,0 +1,265 @@
+/* ==========================================================
+   Student Submissions Page
+   Scoped under .ss-page — matches dashboard.css /
+   question_bank.css / scheduled_exams.css design language
+   (soft shadows, rounded cards, indigo accent, SaaS admin)
+   ========================================================== */
+
+.ss-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #1F2937;
+}
+
+/* ---------- Header ---------- */
+.ss-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ss-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.ss-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+/* ---------- Toolbar / Filters ---------- */
+.ss-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+
+.ss-select-wrap {
+  position: relative;
+}
+
+.ss-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 9px;
+  padding: 10px 34px 10px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1L5 5L9 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.ss-select:hover {
+  border-color: #C7D2FE;
+  background-color: #FFFFFF;
+}
+
+.ss-select:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ---------- Table Card ---------- */
+.ss-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+  overflow: hidden;
+}
+
+.ss-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ss-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.ss-table thead th {
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+  background: #F9FAFB;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.ss-table tbody td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #F1F2F4;
+  font-size: 14px;
+  color: #374151;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ss-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ss-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.ss-table tbody tr:hover {
+  background: #FAFAFF;
+}
+
+/* Student cell */
+.ss-student {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #4338CA;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ss-student-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.ss-roll {
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.ss-marks {
+  font-weight: 600;
+  color: #111827;
+}
+
+.ss-marks-empty {
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+/* Status badges */
+.ss-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ss-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ss-status-evaluated {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.ss-status-pending {
+  background: #FFFAEB;
+  color: #B54708;
+}
+
+.ss-status-late {
+  background: #FEF3F2;
+  color: #B42318;
+}
+
+/* Actions */
+.ss-col-actions {
+  white-space: nowrap;
+}
+
+.ss-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.15s ease;
+}
+
+.ss-icon-btn:last-child {
+  margin-right: 0;
+}
+
+.ss-icon-view:hover {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+.ss-icon-evaluate:hover {
+  background: #ECFDF3;
+  border-color: #A7F3D0;
+  color: #027A48;
+}
+
+.ss-icon-download:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4338CA;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .ss-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ss-select {
+    min-width: 0;
+    width: 100%;
+  }
+}

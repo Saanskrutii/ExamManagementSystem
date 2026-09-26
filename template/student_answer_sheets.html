@@ -1,0 +1,79 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_title %}My Answer Sheets{% endblock %}
+{% block navbar_title %}My Exam Answer Sheets{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: 1.5rem; color: #0f172a; font-weight: 700; margin: 0;">Submitted Attempt Answer Sheets</h1>
+            <p style="color: #64748b; margin: 4px 0 0;">Inspect question-by-question responses, correct answers, and feedback for all your past attempts.</p>
+        </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+        <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; font-weight: 600; color: #334155;">
+            Submitted Attempts History ({{ attempts|length }})
+        </div>
+
+        {% if attempts %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #f1f5f9; color: #475569; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            <th style="padding: 14px 20px;">Exam Title</th>
+                            <th style="padding: 14px 20px;">Subject</th>
+                            <th style="padding: 14px 20px;">Submitted Date</th>
+                            <th style="padding: 14px 20px;">Score</th>
+                            <th style="padding: 14px 20px;">Percentage</th>
+                            <th style="padding: 14px 20px;">Status</th>
+                            <th style="padding: 14px 20px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in attempts %}
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 16px 20px; font-weight: 600; color: #0f172a;">
+                                    {{ att.exam_title }}
+                                </td>
+                                <td style="padding: 16px 20px; color: #475569;">
+                                    {{ att.subject_name }} ({{ att.subject_code }})
+                                </td>
+                                <td style="padding: 16px 20px; color: #475569;">
+                                    📅 {{ att.submitted_at|date:"M d, Y h:i A" }}
+                                </td>
+                                <td style="padding: 16px 20px; font-weight: 600; color: #0f172a;">
+                                    {{ att.score }} / {{ att.total_marks }}
+                                </td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #2563eb;">
+                                    {{ att.percentage }}%
+                                </td>
+                                <td style="padding: 16px 20px;">
+                                    {% if att.status == 'PASSED' %}
+                                        <span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">PASSED</span>
+                                    {% else %}
+                                        <span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">FAILED</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 16px 20px; text-align: right;">
+                                    <a href="{% url 'student_attempt_review' att.id %}" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 8px 14px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 0.85rem;">
+                                        🔍 Review Answer Sheet
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 40px; text-align: center; color: #64748b;">
+                No submitted answer sheets found.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

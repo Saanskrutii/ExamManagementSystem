@@ -1,0 +1,420 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Analytics{% endblock %}
+{% block navbar_title %}Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-heading { margin-bottom: 28px; }
+
+    /* ── Stat Cards ── */
+    .an-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    .an-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px 22px;
+        box-shadow: 0 2px 8px rgba(15,23,42,.04);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .an-stat-icon {
+        width: 46px; height: 46px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .icon-blue   { background: #eff6ff; color: #2563eb; }
+    .icon-purple { background: #f5f3ff; color: #7c3aed; }
+    .icon-green  { background: #f0fdf4; color: #16a34a; }
+    .icon-red    { background: #fef2f2; color: #dc2626; }
+
+    .an-stat-label { font-size: 0.78rem; color: #64748b; font-weight: 600; display: block; }
+    .an-stat-value { font-size: 1.65rem; font-weight: 800; color: #0f172a; line-height: 1.1; display: block; }
+    .an-stat-sub   { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; display: block; }
+
+    /* ── Charts Grid ── */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+    .charts-grid-full {
+        grid-template-columns: 1fr;
+    }
+    @media (max-width: 768px) {
+        .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 4px 16px rgba(15,23,42,.05);
+    }
+    .chart-card-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+    }
+    .chart-card-sub {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin-bottom: 20px;
+    }
+    .chart-wrap { position: relative; }
+
+    /* ── Pass/Fail Gauge ── */
+    .gauge-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    .gauge-circle {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    .gauge-label-center {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    .gauge-pct {
+        font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1;
+    }
+    .gauge-sub { font-size: 0.72rem; color: #64748b; font-weight: 600; }
+    .gauge-pills {
+        display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    }
+    .gauge-pill {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 0.82rem; font-weight: 600; color: #1e293b;
+    }
+    .pill-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ── No data state ── */
+    .no-data {
+        text-align: center; padding: 40px 20px;
+        color: #94a3b8; font-size: 0.88rem;
+    }
+    .no-data svg { width: 48px; height: 48px; margin-bottom: 10px; opacity: .35; display: block; margin-inline: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <h2 class="page-title">Analytics</h2>
+    <p class="page-subtitle">Track student performance metrics and exam statistics at a glance</p>
+</div>
+
+<!-- ── Stat Cards ── -->
+<div class="an-stats-grid">
+
+    <div class="an-stat-card">
+        <div class="an-stat-icon icon-blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+            <span class="an-stat-label">Total Exams</span>
+            <span class="an-stat-value">{{ total_exams }}</span>
+            <span class="an-stat-sub">Created by you</span>
+        </div>
+    </div>
+
+    <div class="an-stat-card">
+        <div class="an-stat-icon icon-purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 20c.6-3.3 3.1-5.5 5.5-5.5s4.9 2.2 5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="9" r="2.3" stroke="currentColor" stroke-width="1.8"/><path d="M15.7 14.8c1.9.4 3.5 2.1 3.9 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+            <span class="an-stat-label">Total Attempts</span>
+            <span class="an-stat-value">{{ total_attempts }}</span>
+            <span class="an-stat-sub">Submitted by students</span>
+        </div>
+    </div>
+
+    <div class="an-stat-card">
+        <div class="an-stat-icon icon-green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.5l2.2 2.2 4.8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+            <span class="an-stat-label">Pass Rate</span>
+            <span class="an-stat-value">{{ pass_rate }}%</span>
+            <span class="an-stat-sub">{{ total_passed }} passed · {{ total_failed }} failed</span>
+        </div>
+    </div>
+
+    <div class="an-stat-card">
+        <div class="an-stat-icon icon-red">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>
+        </div>
+        <div>
+            <span class="an-stat-label">Total Failed</span>
+            <span class="an-stat-value">{{ total_failed }}</span>
+            <span class="an-stat-sub">Need attention</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Row 1: Pass/Fail Donut + Question Type Donut ── -->
+<div class="charts-grid">
+
+    <!-- Pass vs Fail Donut -->
+    <div class="chart-card">
+        <p class="chart-card-title">📊 Pass vs Fail Overview</p>
+        <p class="chart-card-sub">Overall pass/fail breakdown across all exams</p>
+        {% if total_attempts > 0 %}
+        <div class="gauge-section">
+            <div class="gauge-circle">
+                <canvas id="passFailChart" width="180" height="180"></canvas>
+                <div class="gauge-label-center">
+                    <div class="gauge-pct">{{ pass_rate }}%</div>
+                    <div class="gauge-sub">Pass Rate</div>
+                </div>
+            </div>
+            <div class="gauge-pills">
+                <div class="gauge-pill"><div class="pill-dot" style="background:#22c55e;"></div>Passed ({{ total_passed }})</div>
+                <div class="gauge-pill"><div class="pill-dot" style="background:#ef4444;"></div>Failed ({{ total_failed }})</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-data">
+            <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="2"/><path d="M24 33l6 6 11-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            No exam results yet
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Question Type Donut -->
+    <div class="chart-card">
+        <p class="chart-card-title">📝 Question Bank Breakdown</p>
+        <p class="chart-card-sub">Distribution of question types in your bank</p>
+        <div class="chart-wrap" style="max-width:260px; margin:0 auto;">
+            <canvas id="qtypeChart" width="260" height="260"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Row 2: Score Distribution Histogram ── -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <p class="chart-card-title">📈 Score Distribution</p>
+        <p class="chart-card-sub">How students are scoring across all exams (by percentage range)</p>
+        <div class="chart-wrap">
+            <canvas id="distributionChart" height="120"></canvas>
+        </div>
+    </div>
+
+    <!-- Average Score per Exam Bar Chart -->
+    <div class="chart-card">
+        <p class="chart-card-title">🏫 Average Score per Exam</p>
+        <p class="chart-card-sub">Mean student percentage score for each exam</p>
+        {% if exam_labels_json != "[]" %}
+        <div class="chart-wrap">
+            <canvas id="avgScoreChart" height="120"></canvas>
+        </div>
+        {% else %}
+        <div class="no-data">
+            <svg viewBox="0 0 64 64" fill="none"><path d="M12 52V26M28 52V14M44 52V32M52 52h-40" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            No results available yet
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Row 3: Passed vs Failed per Exam ── -->
+{% if exam_labels_json != "[]" %}
+<div class="chart-card" style="margin-bottom: 24px;">
+    <p class="chart-card-title">🎯 Pass vs Fail per Exam</p>
+    <p class="chart-card-sub">Number of students who passed and failed in each exam</p>
+    <div class="chart-wrap">
+        <canvas id="passedFailedChart" height="90"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // ── Data from Django ────────────────────────────────────────
+    const examLabels    = {{ exam_labels_json|safe }};
+    const avgScores     = {{ avg_scores_json|safe }};
+    const passedCounts  = {{ passed_counts_json|safe }};
+    const failedCounts  = {{ failed_counts_json|safe }};
+    const qtypeLabels   = {{ qtype_labels_json|safe }};
+    const qtypeData     = {{ qtype_data_json|safe }};
+    const bucketLabels  = {{ bucket_labels_json|safe }};
+    const bucketData    = {{ bucket_data_json|safe }};
+
+    const totalPassed = {{ total_passed }};
+    const totalFailed = {{ total_failed }};
+
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+    // 1. Pass vs Fail Donut
+    const pfCtx = document.getElementById("passFailChart");
+    if (pfCtx && (totalPassed + totalFailed) > 0) {
+        new Chart(pfCtx, {
+            type: "doughnut",
+            data: {
+                labels: ["Passed", "Failed"],
+                datasets: [{
+                    data: [totalPassed, totalFailed],
+                    backgroundColor: ["#22c55e", "#ef4444"],
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                cutout: "72%",
+                plugins: { legend: { display: false } },
+                animation: { animateRotate: true, duration: 900 }
+            }
+        });
+    }
+
+    // 2. Question Type Donut
+    const qtCtx = document.getElementById("qtypeChart");
+    if (qtCtx) {
+        new Chart(qtCtx, {
+            type: "doughnut",
+            data: {
+                labels: qtypeLabels,
+                datasets: [{
+                    data: qtypeData,
+                    backgroundColor: ["#6366f1", "#f59e0b", "#06b6d4"],
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { font: { size: 12 }, padding: 16 }
+                    }
+                },
+                animation: { animateRotate: true, duration: 900 }
+            }
+        });
+    }
+
+    // 3. Score Distribution Histogram
+    const distCtx = document.getElementById("distributionChart");
+    if (distCtx) {
+        new Chart(distCtx, {
+            type: "bar",
+            data: {
+                labels: bucketLabels,
+                datasets: [{
+                    label: "Students",
+                    data: bucketData,
+                    backgroundColor: ["#ef4444", "#f97316", "#f59e0b", "#22c55e", "#16a34a"],
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: "#f1f5f9" }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 4. Average Score per Exam
+    const avgCtx = document.getElementById("avgScoreChart");
+    if (avgCtx && examLabels.length > 0) {
+        new Chart(avgCtx, {
+            type: "bar",
+            data: {
+                labels: examLabels,
+                datasets: [{
+                    label: "Avg Score (%)",
+                    data: avgScores,
+                    backgroundColor: "#6366f1",
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { callback: v => v + "%" },
+                        grid: { color: "#f1f5f9" }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 5. Pass vs Fail per Exam (grouped bar)
+    const pfExamCtx = document.getElementById("passedFailedChart");
+    if (pfExamCtx && examLabels.length > 0) {
+        new Chart(pfExamCtx, {
+            type: "bar",
+            data: {
+                labels: examLabels,
+                datasets: [
+                    {
+                        label: "Passed",
+                        data: passedCounts,
+                        backgroundColor: "#22c55e",
+                        borderRadius: 5,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: "Failed",
+                        data: failedCounts,
+                        backgroundColor: "#ef4444",
+                        borderRadius: 5,
+                        borderSkipped: false,
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: { font: { size: 12 }, usePointStyle: true }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: "#f1f5f9" }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+
+{% endblock %}

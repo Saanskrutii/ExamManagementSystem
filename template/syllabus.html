@@ -1,0 +1,294 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Syllabus{% endblock %}
+{% block navbar_title %}Syllabus{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/syllabus.css' %}">
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+    }
+    .modal-backdrop.active {
+        display: flex;
+    }
+    .modal-card {
+        background: #ffffff;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        padding: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #64748b;
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-heading page-heading-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <h2 class="page-title">Syllabus Management</h2>
+        <p class="page-subtitle">Add manually or upload a PDF to auto-extract units.</p>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn-outline" id="openPdfModal" style="background: #ffffff; border: 1px solid #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: #1e293b;">
+            📄 Upload PDF Syllabus
+        </button>
+        <button type="button" class="btn-primary" id="openAddUnitModal">
+            <span class="btn-icon" aria-hidden="true">+</span>
+            Add Syllabus Unit
+        </button>
+    </div>
+</div>
+
+{# ── System Messages (e.g. Unit Created / Updated / PDF Extracted / Deleted) ── #}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- ================= TOP CONTROLS ================= -->
+<div class="syllabus-toolbar" style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
+    <div class="subject-select-wrap" style="flex: 1; max-width: 350px;">
+        <select id="subjectFilter" class="subject-select" style="width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem;">
+            <option value="">All Subjects</option>
+            {% for s in subjects %}
+                <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject_id %}selected{% endif %}>
+                    {{ s.name }} ({{ s.code }})
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- ================= SYLLABUS UNITS GRID ================= -->
+{% if units %}
+    <section class="syllabus-grid" aria-label="Syllabus units list">
+        {% for unit in units %}
+            <article class="syllabus-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px;">
+                <div class="syllabus-card-top" style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div class="file-type-icon" style="background: #eff6ff; color: #2563eb; font-weight: 700; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;">
+                        Unit {{ unit.unit_number }}
+                    </div>
+                    <div class="syllabus-heading" style="flex: 1;">
+                        <h3 class="syllabus-subject-name" style="margin: 0; font-size: 1.1rem; color: #0f172a;">{{ unit.title }}</h3>
+                        <span class="syllabus-file-name" style="color: #64748b; font-size: 0.85rem; font-weight: 500;">
+                            {{ unit.subject.name }} ({{ unit.subject.code }})
+                        </span>
+                    </div>
+                </div>
+
+                {% if unit.description %}
+                    <div style="font-size: 0.925rem; color: #334155; margin: 16px 0 0 0; line-height: 1.7; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-family: inherit;">
+                        {{ unit.description }}
+                    </div>
+                {% endif %}
+
+                <div class="syllabus-actions" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+                    <a href="{% url 'edit_syllabus' unit.id %}" class="btn-outline" style="text-decoration: none; padding: 6px 14px;">
+                        ✏ Edit Unit
+                    </a>
+                    <form action="{% url 'delete_syllabus' unit.id %}" method="post" onsubmit="return confirm('Delete Unit {{ unit.unit_number }}: {{ unit.title }}?');" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-outline btn-outline-danger" style="padding: 6px 14px;">
+                            🗑 Delete Unit
+                        </button>
+                    </form>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <section class="empty-state-container" aria-label="No syllabus uploaded" style="text-align: center; padding: 48px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #cbd5e1;">
+        <div class="empty-state-icon" aria-hidden="true" style="font-size: 2.5rem; margin-bottom: 12px;">📘</div>
+        <h3 style="font-size: 1.1rem; color: #1e293b; margin: 0 0 6px 0;">No Syllabus Units Found</h3>
+        <p class="empty-state-text" style="color: #64748b; margin: 0 0 16px 0;">Click "Add Syllabus Unit" or "Upload PDF Syllabus" to import topics into MongoDB.</p>
+    </section>
+{% endif %}
+
+{# ── Add Unit Modal ── #}
+<div class="modal-backdrop" id="addUnitModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Syllabus Unit</h3>
+            <button type="button" class="modal-close" id="closeAddUnitModal">&times;</button>
+        </div>
+
+        <form action="{% url 'syllabus' %}" method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_subject" class="form-label">Select Subject *</label>
+                <select name="subject" id="id_subject" class="form-input" required>
+                    <option value="">-- Choose Subject --</option>
+                    {% for s in subjects %}
+                        <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject_id %}selected{% endif %}>
+                            {{ s.name }} ({{ s.code }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="id_unit_number" class="form-label">Unit / Module Number *</label>
+                <input type="number" name="unit_number" id="id_unit_number" class="form-input" placeholder="e.g. 1" min="1" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="id_title" class="form-label">Unit Title *</label>
+                <input type="text" name="title" id="id_title" class="form-input" placeholder="e.g. Introduction to Relational Databases" required>
+            </div>
+
+            <div class="form-group">
+                <label for="id_description" class="form-label">Topics / Description (Optional)</label>
+                <textarea name="description" id="id_description" class="form-input" rows="3" placeholder="Key topics, concepts, or modules covered in this unit..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" id="cancelAddUnitModal">Cancel</button>
+                <button type="submit" class="btn-primary">Save Unit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ── PDF Upload & Extract Modal ── #}
+<div class="modal-backdrop" id="pdfUploadModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Upload Syllabus PDF</h3>
+            <button type="button" class="modal-close" id="closePdfModal">&times;</button>
+        </div>
+
+        <form action="{% url 'upload_syllabus_pdf' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="subject_id" class="form-label">Select Target Subject *</label>
+                <select name="subject_id" id="subject_id" class="form-input" required>
+                    <option value="">-- Choose Subject --</option>
+                    {% for s in subjects %}
+                        <option value="{{ s.id }}">{{ s.name }} ({{ s.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="pdf_file" class="form-label">Select PDF Document *</label>
+                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" class="form-input" required>
+            </div>
+
+            <p style="font-size: 0.825rem; color: #64748b; margin-top: 4px;">
+                Our parser will automatically read the PDF text, extract units (e.g. Unit 1, Unit 2), and insert them directly into MongoDB!
+            </p>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" id="cancelPdfModal">Cancel</button>
+                <button type="submit" class="btn-primary">Extract & Save Units</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var subjectFilter = document.getElementById("subjectFilter");
+
+        if (subjectFilter) {
+            subjectFilter.addEventListener("change", function() {
+                var selectedVal = this.value;
+                if (selectedVal) {
+                    window.location.href = "{% url 'syllabus' %}?subject=" + selectedVal;
+                } else {
+                    window.location.href = "{% url 'syllabus' %}";
+                }
+            });
+        }
+
+        // Add Unit Modal
+        var unitModal = document.getElementById("addUnitModal");
+        var openUnitBtn = document.getElementById("openAddUnitModal");
+        var closeUnitBtn = document.getElementById("closeAddUnitModal");
+        var cancelUnitBtn = document.getElementById("cancelAddUnitModal");
+
+        if (openUnitBtn) openUnitBtn.addEventListener("click", function() { unitModal.classList.add("active"); });
+        if (closeUnitBtn) closeUnitBtn.addEventListener("click", function() { unitModal.classList.remove("active"); });
+        if (cancelUnitBtn) cancelUnitBtn.addEventListener("click", function() { unitModal.classList.remove("active"); });
+
+        // PDF Upload Modal
+        var pdfModal = document.getElementById("pdfUploadModal");
+        var openPdfBtn = document.getElementById("openPdfModal");
+        var closePdfBtn = document.getElementById("closePdfModal");
+        var cancelPdfBtn = document.getElementById("cancelPdfModal");
+
+        if (openPdfBtn) openPdfBtn.addEventListener("click", function() { pdfModal.classList.add("active"); });
+        if (closePdfBtn) closePdfBtn.addEventListener("click", function() { pdfModal.classList.remove("active"); });
+        if (cancelPdfBtn) cancelPdfBtn.addEventListener("click", function() { pdfModal.classList.remove("active"); });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Edit Syllabus Unit{% endblock %}
+{% block navbar_title %}Edit Syllabus Unit{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/syllabus.css' %}">
+<style>
+    .edit-card {
+        background: #ffffff;
+        border-radius: 12px;
+        max-width: 600px;
+        padding: 28px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin: 20px auto;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #1e293b;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-card">
+    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; color: #0f172a;">
+        Edit Unit {{ unit.unit_number }}: {{ unit.title }}
+    </h2>
+
+    <form action="{% url 'edit_syllabus' unit.id %}" method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="id_subject" class="form-label">Subject *</label>
+            <select name="subject" id="id_subject" class="form-input" required>
+                {% for s in subjects %}
+                    <option value="{{ s.id }}" {% if s.id == unit.subject_id_str %}selected{% endif %}>
+                        {{ s.name }} ({{ s.code }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="id_unit_number" class="form-label">Unit Number *</label>
+            <input type="number" name="unit_number" id="id_unit_number" class="form-input" value="{{ unit.unit_number }}" min="1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="id_title" class="form-label">Unit Title *</label>
+            <input type="text" name="title" id="id_title" class="form-input" value="{{ unit.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="id_description" class="form-label">Description / Topics</label>
+            <textarea name="description" id="id_description" class="form-input" rows="4">{{ unit.description|default:"" }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'syllabus' %}?subject={{ unit.subject_id_str }}" class="btn-outline" style="text-decoration: none; padding: 10px 18px; display: inline-block;">Cancel</a>
+            <button type="submit" class="btn-primary">Update Unit</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

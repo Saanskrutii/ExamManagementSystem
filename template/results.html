@@ -1,0 +1,271 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Results{% endblock %}
+{% block navbar_title %}Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-heading { margin-bottom: 28px; }
+
+    .exam-block {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(15,23,42,.05);
+        margin-bottom: 32px;
+    }
+
+    .exam-block-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .exam-block-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+    }
+    .exam-meta { font-size: 0.82rem; color: #94a3b8; }
+
+    .exam-stats-row {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .exam-stat-box {
+        flex: 1;
+        padding: 16px 24px;
+        text-align: center;
+        border-right: 1px solid #f1f5f9;
+    }
+    .exam-stat-box:last-child { border-right: none; }
+    .exam-stat-num {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+    .exam-stat-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .res-table { width: 100%; border-collapse: collapse; }
+    .res-table thead th {
+        background: #f8fafc;
+        padding: 11px 16px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .res-table thead th:not(:first-child) { text-align: center; }
+    .res-table tbody tr {
+        border-bottom: 1px solid #f8fafc;
+        transition: background .15s;
+    }
+    .res-table tbody tr:last-child { border-bottom: none; }
+    .res-table tbody tr:hover { background: #f8fafc; }
+    .res-table td { padding: 13px 16px; font-size: 0.88rem; vertical-align: middle; }
+    .res-table td:not(:first-child) { text-align: center; }
+
+    .rank-badge {
+        width: 28px; height: 28px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .rank-1 { background: #fef9c3; color: #854d0e; }
+    .rank-2 { background: #f1f5f9; color: #475569; }
+    .rank-3 { background: #fff7ed; color: #c2410c; }
+    .rank-other { background: #f8fafc; color: #94a3b8; }
+
+    .avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff; font-size: 0.7rem; font-weight: 700;
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .student-cell { display: flex; align-items: center; gap: 10px; }
+
+    .badge {
+        display: inline-flex; align-items: center;
+        padding: 3px 12px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .badge-pass { background: #dcfce7; color: #166534; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
+
+    .pct-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: center; }
+    .pct-bar-bg { width: 80px; height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .pct-bar-fill { height: 100%; border-radius: 4px; }
+
+    .empty-block {
+        padding: 40px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    .no-exams-state {
+        padding: 64px 24px;
+        text-align: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        color: #94a3b8;
+    }
+    .no-exams-state svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: .35; }
+    .no-exams-state p { font-size: 0.95rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="res-header" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <h1 class="res-title">Results</h1>
+      <p class="res-subtitle">Analyze exam performance metrics and review student gradebooks</p>
+    </div>
+    <a href="{% url 'export_results_csv' %}"
+       style="display:inline-flex; align-items:center; gap:8px; background:#16a34a; color:#fff;
+              padding:10px 18px; border-radius:8px; text-decoration:none; font-weight:700;
+              font-size:.85rem; box-shadow:0 2px 8px rgba(22,163,74,.2); transition:opacity .2s;"
+       onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        📥 Export CSV
+    </a>
+  </div>
+
+{% if exam_results %}
+    {% for exam in exam_results %}
+
+    <div class="exam-block">
+
+        <!-- Exam Header -->
+        <div class="exam-block-header">
+            <div>
+                <h2 class="exam-block-title">{{ exam.exam_title }}</h2>
+                <div class="exam-meta">
+                    Total Marks: <strong style="color:#fff;">{{ exam.total_marks }}</strong>
+                    &nbsp;·&nbsp;
+                    Passing Marks: <strong style="color:#fff;">{{ exam.passing_marks }}</strong>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <div style="background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.3); border-radius:8px; padding:6px 16px; text-align:center;">
+                    <div style="font-size:1.25rem; font-weight:800; color:#4ade80;">{{ exam.passed_count }}</div>
+                    <div style="font-size:0.7rem; color:#86efac; font-weight:600;">PASSED</div>
+                </div>
+                <div style="background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:6px 16px; text-align:center;">
+                    <div style="font-size:1.25rem; font-weight:800; color:#f87171;">{{ exam.failed_count }}</div>
+                    <div style="font-size:0.7rem; color:#fca5a5; font-weight:600;">FAILED</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        {% if exam.student_scores %}
+        <div style="overflow-x:auto;">
+            <table class="res-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px;">Rank</th>
+                        <th>Student</th>
+                        <th style="text-align:center;">Attempts History</th>
+                        <th style="text-align:center;">Latest Score</th>
+                        <th style="text-align:center;">Percentage</th>
+                        <th style="text-align:center;">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sc in exam.student_scores %}
+                    <tr>
+                        <td style="text-align:center;">
+                            {% if forloop.counter == 1 %}
+                                <span class="rank-badge rank-1">🥇</span>
+                            {% elif forloop.counter == 2 %}
+                                <span class="rank-badge rank-2">🥈</span>
+                            {% elif forloop.counter == 3 %}
+                                <span class="rank-badge rank-3">🥉</span>
+                            {% else %}
+                                <span class="rank-badge rank-other">{{ forloop.counter }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="student-cell">
+                                <div class="avatar">{{ sc.student_name|slice:":2"|upper }}</div>
+                                <div>
+                                    <div style="font-weight:600; color:#0f172a;">{{ sc.student_name }}</div>
+                                    <div style="font-size:0.75rem; color:#94a3b8;">@{{ sc.student_username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                                {% for att in sc.attempts_history %}
+                                    <span style="background:{% if att.status == 'PASSED' %}#dcfce7{% else %}#fee2e2{% endif %}; color:{% if att.status == 'PASSED' %}#166534{% else %}#991b1b{% endif %}; border:1px solid {% if att.status == 'PASSED' %}#86efac{% else %}#fca5a5{% endif %}; padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;">
+                                        Att #{{ att.attempt_no }}: {{ att.score }}/{{ att.total_marks }} ({{ att.percentage }}%)
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <span style="font-size:1rem; font-weight:800; color:#0f172a;">{{ sc.score }}</span>
+                            <span style="color:#94a3b8; font-size:0.85rem;">/{{ sc.total_marks }}</span>
+                        </td>
+                        <td style="text-align:center;">
+                            <div class="pct-bar-wrap">
+                                <div class="pct-bar-bg">
+                                    <div class="pct-bar-fill" style="width:{{ sc.percentage }}%;
+                                        background: {% if sc.percentage >= 60 %}#22c55e{% elif sc.percentage >= 40 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                                </div>
+                                <span style="font-size:0.82rem; font-weight:600; color:#1e293b; min-width:38px;">{{ sc.percentage }}%</span>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            {% if sc.status == "PASSED" %}
+                                <span class="badge badge-pass">✅ PASS</span>
+                            {% else %}
+                                <span class="badge badge-fail">❌ FAIL</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-block">
+            No student attempts recorded for this exam yet.
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% endfor %}
+
+{% else %}
+    <div class="no-exams-state">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="2"/>
+            <path d="M24 33l6 6 11-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p>No exam results available yet.<br>Results will appear here once students complete and submit exams.</p>
+    </div>
+{% endif %}
+
+{% endblock %}

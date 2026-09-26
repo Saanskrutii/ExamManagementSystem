@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block page_title %}Student Portal{% endblock %} | Exam Management System</title>
+    <link rel="stylesheet" href="{% static 'css/basedashboard.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div class="app-layout" id="appLayout">
+
+        <!-- ================= SIDEBAR (Student) ================= -->
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <span class="sidebar-logo-mark">EMS</span>
+                </div>
+                <span class="sidebar-brand-name">Student Portal</span>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Primary navigation">
+                <ul class="nav-list">
+
+                    <li class="nav-item">
+                        <a href="{% url 'student_dashboard' %}"
+                           class="nav-link{% if request.resolver_match.url_name == 'student_dashboard' %} active{% endif %}"
+                           {% if request.resolver_match.url_name == 'student_dashboard' %}aria-current="page"{% endif %}>
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="5" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="12" width="8" height="9" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="15" width="8" height="6" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+                            </span>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{% url 'student_all_exams' %}"
+                           class="nav-link{% if request.resolver_match.url_name == 'student_all_exams' %} active{% endif %}"
+                           {% if request.resolver_match.url_name == 'student_all_exams' %}aria-current="page"{% endif %}>
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <span class="nav-text">All Exams</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{% url 'student_analytics' %}"
+                           class="nav-link{% if request.resolver_match.url_name == 'student_analytics' %} active{% endif %}"
+                           {% if request.resolver_match.url_name == 'student_analytics' %}aria-current="page"{% endif %}>
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20V14M8 20V10M12 20V4M16 20V10M20 20V14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <span class="nav-text">My Analytics</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{% url 'student_answer_sheets' %}"
+                           class="nav-link{% if request.resolver_match.url_name == 'student_answer_sheets' %} active{% endif %}"
+                           {% if request.resolver_match.url_name == 'student_answer_sheets' %}aria-current="page"{% endif %}>
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <span class="nav-text">My Answer Sheets</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{% url 'student_settings' %}"
+                           class="nav-link{% if request.resolver_match.url_name == 'student_settings' %} active{% endif %}"
+                           {% if request.resolver_match.url_name == 'student_settings' %}aria-current="page"{% endif %}>
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.7"/></svg>
+                            </span>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+
+                </ul>
+
+                <ul class="nav-list nav-list-secondary">
+
+                    <li class="nav-item">
+                        <a href="{% url 'logout' %}" class="nav-link">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4H6.5A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M15 16l4-4-4-4M19 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <span class="nav-text">Logout</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </aside>
+
+        <!-- ================= MAIN WRAPPER (navbar + content) ================= -->
+        <div class="main-wrapper">
+
+            <header class="navbar main-navbar">
+                <div class="navbar-left">
+                    <button type="button" class="icon-button" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="true">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                    <div>
+                        <h1 class="navbar-title">{% block navbar_title %}Dashboard{% endblock %}</h1>
+                        <span class="navbar-date">{% block navbar_date %}{% now "l, F j, Y" %}{% endblock %}</span>
+                    </div>
+                </div>
+
+                <div class="navbar-right">
+
+                    <div class="navbar-profile">
+                        {% if request.user.profile_picture %}
+                            <img src="{{ request.user.profile_picture.url }}" alt="Profile" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;">
+                        {% else %}
+                            <div class="profile-avatar" aria-hidden="true">{{ request.user.username|slice:":1"|upper }}</div>
+                        {% endif %}
+                        <span class="profile-name">{{ request.user.first_name|default:request.user.username }} (Student)</span>
+                    </div>
+
+                </div>
+            </header>
+
+            <main class="page-content">
+                {% block content %}
+                {% endblock %}
+            </main>
+
+        </div>
+
+    </div>
+
+    {% block extra_js %}
+    <script>
+        (function () {
+            "use strict";
+            var toggleButton = document.getElementById("sidebarToggle");
+            var appLayout = document.getElementById("appLayout");
+
+            if (!toggleButton || !appLayout) {
+                return;
+            }
+
+            toggleButton.addEventListener("click", function () {
+                var isCollapsed = appLayout.classList.toggle("sidebar-collapsed");
+                toggleButton.setAttribute("aria-expanded", String(!isCollapsed));
+            });
+        })();
+    </script>
+    {% endblock %}
+
+</body>
+</html>

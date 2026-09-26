@@ -1,0 +1,134 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Edit Question{% endblock %}
+{% block navbar_title %}Edit Question{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/question_bank.css' %}">
+<style>
+    .edit-card {
+        background: #ffffff;
+        border-radius: 12px;
+        max-width: 650px;
+        padding: 28px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin: 20px auto;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #1e293b;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-card">
+    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; color: #0f172a;">Edit Question</h2>
+
+    <form action="{% url 'edit_question' question.id %}" method="post">
+        {% csrf_token %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                <label for="id_subject" class="form-label">Subject *</label>
+                <select name="subject" id="id_subject" class="form-input" required>
+                    {% for s in subjects %}
+                        <option value="{{ s.id }}" {% if s.id == question.subject_id_str %}selected{% endif %}>
+                            {{ s.name }} ({{ s.code }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_unit" class="form-label">Syllabus Unit</label>
+                <input type="text" name="unit" id="id_unit" class="form-input" value="{{ question.unit_id_str|default:'' }}" placeholder="Unit ID (Optional)">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                <label for="id_question_type" class="form-label">Type *</label>
+                <select name="question_type" id="id_question_type" class="form-input">
+                    <option value="MCQ" {% if question.question_type == "MCQ" %}selected{% endif %}>Multiple Choice (MCQ)</option>
+                    <option value="TRUE_FALSE" {% if question.question_type == "TRUE_FALSE" %}selected{% endif %}>True / False</option>
+                    <option value="DESCRIPTIVE" {% if question.question_type == "DESCRIPTIVE" %}selected{% endif %}>Descriptive / Short Answer</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_difficulty" class="form-label">Difficulty *</label>
+                <select name="difficulty" id="id_difficulty" class="form-input">
+                    <option value="EASY" {% if question.difficulty == "EASY" %}selected{% endif %}>Easy</option>
+                    <option value="MEDIUM" {% if question.difficulty == "MEDIUM" %}selected{% endif %}>Medium</option>
+                    <option value="HARD" {% if question.difficulty == "HARD" %}selected{% endif %}>Hard</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_marks" class="form-label">Marks *</label>
+                <input type="number" name="marks" id="id_marks" class="form-input" value="{{ question.marks|default:1 }}" min="1" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_question_text" class="form-label">Question Text *</label>
+            <textarea name="question_text" id="id_question_text" class="form-input" rows="3" required>{{ question.question_text }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="id_option_a" class="form-label">Option A</label>
+            <input type="text" name="option_a" id="id_option_a" class="form-input" value="{{ question.option_a|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="id_option_b" class="form-label">Option B</label>
+            <input type="text" name="option_b" id="id_option_b" class="form-input" value="{{ question.option_b|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="id_option_c" class="form-label">Option C</label>
+            <input type="text" name="option_c" id="id_option_c" class="form-input" value="{{ question.option_c|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="id_option_d" class="form-label">Option D</label>
+            <input type="text" name="option_d" id="id_option_d" class="form-input" value="{{ question.option_d|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="id_correct_answer" class="form-label">Correct Answer / Option *</label>
+            <input type="text" name="correct_answer" id="id_correct_answer" class="form-input" value="{{ question.correct_answer }}" required>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'question_bank' %}?subject={{ question.subject_id_str }}" class="btn-outline" style="text-decoration: none; padding: 10px 18px; display: inline-block;">Cancel</a>
+            <button type="submit" class="btn-primary">Update Question</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

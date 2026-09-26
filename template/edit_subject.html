@@ -1,0 +1,79 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Edit Subject{% endblock %}
+{% block navbar_title %}Edit Subject{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/subjects.css' %}">
+<style>
+    .edit-card {
+        background: #ffffff;
+        border-radius: 12px;
+        max-width: 600px;
+        padding: 28px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        margin: 20px auto;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.975rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #1e293b;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-card">
+    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; color: #0f172a;">Edit Subject: {{ subject.name }}</h2>
+
+    <form action="{% url 'edit_subject' subject.id %}" method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="id_name" class="form-label">Subject Name *</label>
+            <input type="text" name="name" id="id_name" class="form-input" value="{{ subject.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="id_code" class="form-label">Subject Code *</label>
+            <input type="text" name="code" id="id_code" class="form-input" value="{{ subject.code }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="id_description" class="form-label">Description</label>
+            <textarea name="description" id="id_description" class="form-input" rows="3">{{ subject.description|default:"" }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'subjects' %}" class="btn-outline" style="text-decoration: none; padding: 10px 18px; display: inline-block;">Cancel</a>
+            <button type="submit" class="btn-primary">Update Subject</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

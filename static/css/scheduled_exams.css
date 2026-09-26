@@ -1,0 +1,268 @@
+/* ==========================================================
+   Scheduled Exams Page
+   Scoped under .se-page — matches dashboard.css /
+   question_bank.css design language (soft shadows, rounded
+   cards, indigo accent, SaaS admin look)
+   ========================================================== */
+
+.se-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #1F2937;
+}
+
+/* ---------- Header ---------- */
+.se-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.se-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.se-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.se-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.08), 0 4px 10px rgba(79, 70, 229, 0.18);
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.se-btn-primary:hover {
+  background: #4338CA;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1), 0 6px 14px rgba(79, 70, 229, 0.24);
+}
+
+.se-btn-primary:active {
+  transform: translateY(1px);
+}
+
+.se-btn-icon {
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* ---------- Table Card ---------- */
+.se-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+  overflow: hidden;
+}
+
+.se-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.se-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.se-table thead th {
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+  background: #F9FAFB;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.se-table tbody td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #F1F2F4;
+  font-size: 14px;
+  color: #374151;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.se-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.se-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.se-table tbody tr:hover {
+  background: #FAFAFF;
+}
+
+.se-exam-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Subject tag */
+.se-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: #4338CA;
+}
+
+/* Status badges */
+.se-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.se-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.se-status-upcoming {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.se-status-completed {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.se-status-cancelled {
+  background: #FEF3F2;
+  color: #B42318;
+}
+
+/* Actions */
+.se-col-actions {
+  white-space: nowrap;
+}
+
+.se-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.15s ease;
+}
+
+.se-icon-btn:last-child {
+  margin-right: 0;
+}
+
+.se-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.se-icon-view:hover:not(:disabled) {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+.se-icon-edit:hover:not(:disabled) {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4338CA;
+}
+
+.se-icon-delete:hover:not(:disabled) {
+  background: #FEF3F2;
+  border-color: #FECDCA;
+  color: #B42318;
+}
+
+/* ---------- Empty State ---------- */
+.se-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 72px 24px;
+}
+
+.se-empty-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: #F3F4FF;
+  color: #6366F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.se-empty-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.se-empty-text {
+  margin: 0 0 22px;
+  font-size: 14px;
+  color: #6B7280;
+  max-width: 320px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .se-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .se-btn-primary {
+    justify-content: center;
+  }
+}

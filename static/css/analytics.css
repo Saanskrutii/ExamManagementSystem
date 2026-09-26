@@ -1,0 +1,509 @@
+/* ==========================================================
+   Analytics Page
+   Scoped under .an-page — matches dashboard.css /
+   results.css design language (soft shadows, rounded cards,
+   indigo accent, SaaS admin). Charts are pure CSS/SVG dummies,
+   no chart libraries.
+   ========================================================== */
+
+.an-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #1F2937;
+}
+
+/* ---------- Header ---------- */
+.an-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.an-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.an-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+/* ---------- Shared Card ---------- */
+.an-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+}
+
+.an-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 20px;
+}
+
+.an-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.an-card-note {
+  font-size: 12.5px;
+  color: #9CA3AF;
+}
+
+/* ---------- Performance Stat Cards ---------- */
+.an-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.an-stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+}
+
+.an-stat-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.an-icon-score {
+  background: #EEF2FF;
+  color: #4338CA;
+}
+
+.an-icon-pass {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.an-icon-attendance {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.an-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.an-stat-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.an-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.an-stat-trend {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.an-trend-up {
+  color: #027A48;
+}
+
+.an-trend-down {
+  color: #B42318;
+}
+
+/* ---------- Chart Row (Difficulty + Accuracy) ---------- */
+.an-chart-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* Bar chart */
+.an-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.an-bar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 44px;
+  align-items: center;
+  gap: 12px;
+}
+
+.an-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.an-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #F3F4F6;
+  overflow: hidden;
+}
+
+.an-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.an-bar-easy {
+  background: #34D399;
+}
+
+.an-bar-medium {
+  background: #F59E0B;
+}
+
+.an-bar-hard {
+  background: #F87171;
+}
+
+.an-bar-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+/* Donut chart */
+.an-card-donut {
+  display: flex;
+  flex-direction: column;
+}
+
+.an-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+}
+
+.an-donut {
+  --accuracy: 74;
+  --donut-color: #4F46E5;
+  --track-color: #F3F4F6;
+  flex-shrink: 0;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: conic-gradient(var(--donut-color) calc(var(--accuracy) * 3.6deg), var(--track-color) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.an-donut::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.an-donut-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.an-donut-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.an-donut-caption {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #9CA3AF;
+}
+
+.an-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.an-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.an-legend-item strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.an-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.an-dot-correct {
+  background: #4F46E5;
+}
+
+.an-dot-incorrect {
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+}
+
+/* ---------- Line Chart (Recent Performance) ---------- */
+.an-line-chart {
+  width: 100%;
+}
+
+.an-line-svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+  overflow: visible;
+}
+
+.an-grid-line {
+  stroke: #F1F2F4;
+  stroke-width: 1;
+}
+
+.an-line-fill {
+  fill: rgba(79, 70, 229, 0.08);
+  stroke: none;
+}
+
+.an-line-path {
+  fill: none;
+  stroke: #4F46E5;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.an-line-dot {
+  fill: #FFFFFF;
+  stroke: #4F46E5;
+  stroke-width: 2.5;
+}
+
+.an-line-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.an-line-labels span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9CA3AF;
+}
+
+/* ---------- Bottom Row (Leaderboard + Weak Topics) ---------- */
+.an-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+/* Top Performing Students */
+.an-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.an-leader-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #F1F2F4;
+  border-radius: 12px;
+  background: #FAFAFB;
+}
+
+.an-rank {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.an-rank-1 {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.an-rank-2 {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.an-rank-3 {
+  background: #FFE4D5;
+  color: #9A3412;
+}
+
+.an-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #4338CA;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.an-leader-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.an-leader-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.an-leader-meta {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.an-leader-score {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #027A48;
+}
+
+/* Weak Topics */
+.an-weak-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.an-weak-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.an-weak-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.an-weak-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.an-weak-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #F3F4F6;
+  overflow: hidden;
+}
+
+.an-weak-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.an-weak-critical {
+  background: #F87171;
+}
+
+.an-weak-warning {
+  background: #F59E0B;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .an-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .an-chart-row,
+  .an-bottom-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .an-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .an-donut-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .an-bar-row {
+    grid-template-columns: 60px 1fr 38px;
+  }
+}

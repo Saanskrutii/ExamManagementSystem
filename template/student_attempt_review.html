@@ -1,0 +1,114 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_title %}Answer Sheet Review{% endblock %}
+{% block navbar_title %}Answer Sheet Review{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto; padding: 24px;">
+
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">
+                    {{ subject_code }} - {{ subject_name }}
+                </span>
+                <h1 style="font-size: 1.6rem; color: #0f172a; font-weight: 800; margin: 10px 0 4px;">
+                    {{ exam.title }}
+                </h1>
+                <p style="color: #64748b; margin: 0; font-size: 0.9rem;">
+                    Student: <strong>{{ student_user.first_name }} {{ student_user.last_name }} ({{ student_user.username }})</strong> | 
+                    Submitted: {{ attempt.submitted_at|date:"M d, Y h:i A" }}
+                </p>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-size: 1.8rem; font-weight: 800; color: {% if result.status == 'PASSED' %}#166534{% else %}#991b1b{% endif %};">
+                    {{ result.score }} / {{ result.total_marks }}
+                </div>
+                <div style="font-size: 0.9rem; font-weight: 700; color: #64748b;">
+                    Percentage: <span style="color: #2563eb;">{{ result.percentage }}%</span>
+                </div>
+                <span style="display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; background: {% if result.status == 'PASSED' %}#dcfce7{% else %}#fee2e2{% endif %}; color: {% if result.status == 'PASSED' %}#166534{% else %}#991b1b{% endif %};">
+                    {{ result.status }}
+                </span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Correct</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #166534;">{{ correct_count }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Wrong</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #991b1b;">{{ wrong_count }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Skipped</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #d97706;">{{ skipped_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Response Review Section -->
+    <h2 style="font-size: 1.2rem; color: #0f172a; font-weight: 700; margin-bottom: 16px;">
+        Question-by-Question Response Breakdown
+    </h2>
+
+    {% for item in answer_review %}
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid {% if item.outcome == 'correct' %}#86efac{% elif item.outcome == 'wrong' %}#fca5a5{% else %}#cbd5e1{% endif %}; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+                    Question {{ item.number }} ({{ item.question_type }})
+                </span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 0.8rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                        ⏱️ Time Spent: {{ item.time_spent }}s
+                    </span>
+                    <span style="font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: {% if item.outcome == 'correct' %}#dcfce7{% elif item.outcome == 'wrong' %}#fee2e2{% else %}#f1f5f9{% endif %}; color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                        Marks: {{ item.earned_marks }} / {{ item.marks }}
+                    </span>
+                </div>
+            </div>
+
+            <p style="font-size: 1rem; color: #1e293b; font-weight: 600; margin: 0 0 14px;">
+                {{ item.question_text }}
+            </p>
+
+            {% if item.question_type == 'MCQ' %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem;">
+                    <div style="color: {% if item.correct_ans == 'A' %}#166534{% elif item.student_ans == 'A' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'A' or item.student_ans == 'A' %}700{% else %}400{% endif %};">
+                        <strong>A:</strong> {{ item.option_a }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'B' %}#166534{% elif item.student_ans == 'B' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'B' or item.student_ans == 'B' %}700{% else %}400{% endif %};">
+                        <strong>B:</strong> {{ item.option_b }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'C' %}#166534{% elif item.student_ans == 'C' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'C' or item.student_ans == 'C' %}700{% else %}400{% endif %};">
+                        <strong>C:</strong> {{ item.option_c }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'D' %}#166534{% elif item.student_ans == 'D' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'D' or item.student_ans == 'D' %}700{% else %}400{% endif %};">
+                        <strong>D:</strong> {{ item.option_d }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem;">
+                <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; flex: 1;">
+                    <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; display: block;">STUDENT RESPONSE:</span>
+                    <strong style="color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                        {{ item.student_ans }}
+                    </strong>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 6px; flex: 1;">
+                    <span style="color: #166534; font-size: 0.8rem; font-weight: 600; display: block;">CORRECT SOLUTION:</span>
+                    <strong style="color: #166534;">
+                        {{ item.correct_ans }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_title %}My Analytics{% endblock %}
+
+{% block content %}
+<style>
+    .page-heading { margin-bottom: 28px; }
+
+    /* ── Stat strip ── */
+    .stat-strip {
+        display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .stat-chip {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 16px 22px; flex: 1; min-width: 160px;
+        box-shadow: 0 2px 8px rgba(15,23,42,.04);
+    }
+    .chip-num  { font-size: 1.8rem; font-weight: 800; color: #0f172a; line-height:1; }
+    .chip-label{ font-size: .78rem; color: #64748b; font-weight: 600; margin-top: 4px; }
+
+    /* ── Cards ── */
+    .an-card {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+        padding: 24px; box-shadow: 0 4px 16px rgba(15,23,42,.05); margin-bottom: 24px;
+    }
+    .an-card-title { font-size: .95rem; font-weight: 700; color: #0f172a; margin: 0 0 4px; }
+    .an-card-sub   { font-size: .78rem; color: #94a3b8; margin-bottom: 20px; }
+
+    /* ── Improvement table ── */
+    .imp-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    .imp-table th {
+        background:#f8fafc; padding:10px 14px; font-size:.75rem; font-weight:700;
+        color:#64748b; text-transform:uppercase; letter-spacing:.05em;
+        text-align:left; border-bottom:1px solid #e2e8f0;
+    }
+    .imp-table td { padding:12px 14px; border-bottom:1px solid #f8fafc; color:#334155; vertical-align:middle; }
+    .imp-table tr:last-child td { border-bottom:none; }
+
+    .badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:.73rem; font-weight:700; }
+    .badge-pass { background:#dcfce7; color:#166534; }
+    .badge-fail { background:#fee2e2; color:#991b1b; }
+    .badge-up   { background:#eff6ff; color:#2563eb; }
+    .badge-down { background:#fef2f2; color:#dc2626; }
+
+    /* ── AI Analysis ── */
+    .ai-grid {
+        display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;
+    }
+    @media(max-width:640px){ .ai-grid{ grid-template-columns:1fr; } }
+
+    .ai-box {
+        border-radius:12px; padding:18px;
+    }
+    .ai-box-weak   { background:#fef2f2; border:1px solid #fecaca; }
+    .ai-box-strong { background:#f0fdf4; border:1px solid #bbf7d0; }
+    .ai-box-title  { font-size:.82rem; font-weight:700; margin-bottom:10px; }
+    .ai-box-weak   .ai-box-title { color:#dc2626; }
+    .ai-box-strong .ai-box-title { color:#16a34a; }
+
+    .topic-tag {
+        display:inline-block; padding:4px 12px; border-radius:20px;
+        font-size:.78rem; font-weight:600; margin:3px 4px 3px 0;
+    }
+    .topic-tag-weak   { background:#fff; border:1.5px solid #fca5a5; color:#b91c1c; }
+    .topic-tag-strong { background:#fff; border:1.5px solid #86efac; color:#15803d; }
+
+    /* ── Study suggestions ── */
+    .suggestion-list { list-style:none; padding:0; margin:0; }
+    .suggestion-list li {
+        display:flex; align-items:flex-start; gap:10px;
+        padding:10px 0; border-bottom:1px solid #f1f5f9; font-size:.88rem; color:#1e293b;
+    }
+    .suggestion-list li:last-child { border-bottom:none; }
+    .sug-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+
+    /* ── YouTube links ── */
+    .yt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+    .yt-card {
+        display:flex; align-items:center; gap:12px;
+        background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+        padding:14px; text-decoration:none; transition:all .2s;
+        box-shadow:0 2px 6px rgba(15,23,42,.04);
+    }
+    .yt-card:hover { border-color:#ef4444; box-shadow:0 4px 14px rgba(239,68,68,.12); transform:translateY(-1px); }
+    .yt-icon {
+        width:40px; height:40px; background:#fef2f2; border-radius:8px;
+        display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .yt-title { font-size:.82rem; font-weight:600; color:#0f172a; line-height:1.3; }
+    .yt-sub   { font-size:.72rem; color:#94a3b8; margin-top:2px; }
+
+    /* ── Empty ── */
+    .empty-state {
+        text-align:center; padding:56px 24px; background:#fff;
+        border:1px solid #e2e8f0; border-radius:14px; color:#94a3b8;
+    }
+    .empty-state svg { width:56px; height:56px; margin-bottom:14px; opacity:.35; display:block; margin-inline:auto; }
+    .empty-state p { font-size:.92rem; }
+
+    /* ── AI badge ── */
+    .ai-badge {
+        display:inline-flex; align-items:center; gap:5px;
+        background:linear-gradient(135deg,#6366f1,#8b5cf6);
+        color:#fff; font-size:.72rem; font-weight:700; letter-spacing:.04em;
+        padding:3px 10px; border-radius:20px; margin-left:8px; vertical-align:middle;
+    }
+</style>
+
+<div class="page-heading">
+    <h2 class="page-title">📊 My Analytics</h2>
+    <p class="page-subtitle">Track your progress, see where you need to improve, and get AI-powered study guidance</p>
+</div>
+
+{% if total_attempts == 0 %}
+<div class="empty-state">
+    <svg viewBox="0 0 64 64" fill="none"><path d="M12 52V26M28 52V14M44 52V32M52 52h-40" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <p>You haven't completed any exams yet.<br>Attempt an exam to see your analytics here.</p>
+    <a href="{% url 'student_dashboard' %}" style="color:#2563eb; font-weight:600; font-size:.9rem;">Go to Dashboard →</a>
+</div>
+
+{% else %}
+
+<!-- ── Stat Strip ── -->
+<div class="stat-strip">
+    <div class="stat-chip">
+        <div class="chip-num">{{ total_attempts }}</div>
+        <div class="chip-label">Total Attempts</div>
+    </div>
+    <div class="stat-chip">
+        <div class="chip-num">{{ improvement_data|length }}</div>
+        <div class="chip-label">Exams Taken</div>
+    </div>
+    {% for d in improvement_data %}
+    {% if d.improvement > 0 %}
+    <div class="stat-chip" style="border-left:4px solid #22c55e;">
+        <div class="chip-num" style="color:#16a34a;">+{{ d.improvement }}%</div>
+        <div class="chip-label">Best Improvement ({{ d.exam_title|truncatechars:20 }})</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- ── Improvement per Exam Table + Peer Benchmarking ── -->
+<div class="an-card">
+    <p class="an-card-title">📈 Score Improvement & Peer Comparison Benchmarking</p>
+    <p class="an-card-sub">Compare your score against Class Highest, Class Average, and Class Lowest metrics</p>
+
+    {% if improvement_data %}
+    <div style="overflow-x:auto;">
+        <table class="imp-table">
+            <thead>
+                <tr>
+                    <th>Exam Title</th>
+                    <th style="text-align:center;">Attempts</th>
+                    <th style="text-align:center;">Your Score</th>
+                    <th style="text-align:center;">Class Highest</th>
+                    <th style="text-align:center;">Class Avg</th>
+                    <th style="text-align:center;">Class Lowest</th>
+                    <th style="text-align:center;">Your Rank</th>
+                    <th style="text-align:center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in improvement_data %}
+                <tr>
+                    <td style="font-weight:600; color:#0f172a;">{{ d.exam_title }}</td>
+                    <td style="text-align:center;">
+                        <span style="background:#f1f5f9; border-radius:20px; padding:2px 10px; font-size:.8rem; font-weight:600;">
+                            {{ d.attempts|length }} attempt{{ d.attempts|length|pluralize }}
+                        </span>
+                    </td>
+                    <td style="text-align:center; font-weight:800; font-size:1rem; color:#2563eb;">
+                        {{ d.latest_pct }}%
+                    </td>
+                    <td style="text-align:center; font-weight:700; color:#166534;">
+                        {{ d.class_highest }}%
+                    </td>
+                    <td style="text-align:center; font-weight:600; color:#475569;">
+                        {{ d.class_avg }}%
+                    </td>
+                    <td style="text-align:center; font-weight:600; color:#991b1b;">
+                        {{ d.class_lowest }}%
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="background:#eff6ff; color:#1d4ed8; padding:2px 8px; border-radius:6px; font-weight:700; font-size:.8rem;">
+                            #{{ d.student_rank }} of {{ d.total_students_attempted }}
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if d.latest_status == "PASSED" %}
+                            <span class="badge badge-pass">✅ PASS</span>
+                        {% else %}
+                            <span class="badge badge-fail">❌ FAIL</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Question-Wise Time Breakdown ── -->
+{% if question_time_analysis %}
+<div class="an-card">
+    <p class="an-card-title">⏱️ Question-Wise Time Tracking Breakdown</p>
+    <p class="an-card-sub">Time spent on each question during your latest exam attempt</p>
+
+    <div style="overflow-x:auto;">
+        <table class="imp-table">
+            <thead>
+                <tr>
+                    <th style="width:60px;">#</th>
+                    <th>Question Text</th>
+                    <th style="text-align:center;">Type</th>
+                    <th style="text-align:center;">Time Spent</th>
+                    <th style="text-align:center;">Accuracy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in question_time_analysis %}
+                <tr>
+                    <td style="font-weight:700; color:#64748b;">Q{{ q.number }}</td>
+                    <td style="font-weight:500; color:#0f172a;">{{ q.question_text }}</td>
+                    <td style="text-align:center; font-size:.8rem; color:#475569;">{{ q.question_type }}</td>
+                    <td style="text-align:center; font-weight:700; color:#0f172a;">
+                        ⏱️ {{ q.time_spent }}s
+                    </td>
+                    <td style="text-align:center;">
+                        {% if q.is_correct %}
+                            <span class="badge badge-pass">Correct</span>
+                        {% else %}
+                            <span class="badge badge-fail">Wrong</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Score Chart ── -->
+{% if improvement_data %}
+<div class="an-card">
+    <p class="an-card-title">📊 Score & Peer Comparison Overview Chart</p>
+    <p class="an-card-sub">Your latest score percentage vs Class Average across all exams</p>
+    <canvas id="scoreChart" height="100"></canvas>
+</div>
+{% endif %}
+
+<!-- ── AI Analysis ── -->
+{% if ai_analysis %}
+<div class="an-card">
+    <p class="an-card-title">
+        🤖 AI Performance Analysis
+        <span class="ai-badge">✨ Gemini AI</span>
+    </p>
+    <p class="an-card-sub">Based on your most recent exam attempt — topics you're struggling with and what you're good at</p>
+
+    <!-- Weak / Strong Topics -->
+    <div class="ai-grid">
+        <div class="ai-box ai-box-weak">
+            <div class="ai-box-title">⚠️ Weak Topics — Focus Here</div>
+            {% for t in ai_analysis.weak_topics %}
+                <span class="topic-tag topic-tag-weak">{{ t }}</span>
+            {% empty %}
+                <span style="font-size:.82rem; color:#94a3b8;">No weak topics identified 🎉</span>
+            {% endfor %}
+        </div>
+        <div class="ai-box ai-box-strong">
+            <div class="ai-box-title">✅ Strong Topics — Keep it up!</div>
+            {% for t in ai_analysis.strong_topics %}
+                <span class="topic-tag topic-tag-strong">{{ t }}</span>
+            {% empty %}
+                <span style="font-size:.82rem; color:#94a3b8;">Keep practising to build strengths!</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Study Suggestions -->
+    {% if ai_analysis.study_suggestions %}
+    <div style="margin-top:20px;">
+        <div style="font-size:.85rem; font-weight:700; color:#0f172a; margin-bottom:12px;">📚 Study Suggestions</div>
+        <ul class="suggestion-list">
+            {% for tip in ai_analysis.study_suggestions %}
+            <li>
+                <span class="sug-icon">💡</span>
+                <span>{{ tip }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- YouTube Links -->
+    {% if ai_analysis.youtube_links %}
+    <div style="margin-top:24px;">
+        <div style="font-size:.85rem; font-weight:700; color:#0f172a; margin-bottom:12px;">
+            🎬 Recommended YouTube Resources
+        </div>
+        <div class="yt-grid">
+            {% for yt in ai_analysis.youtube_links %}
+            <a href="{{ yt.url }}" target="_blank" rel="noopener" class="yt-card">
+                <div class="yt-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ef4444"><path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.2 2.8 12 2.8 12 2.8s-4.2 0-6.8.2c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.4 21.5 12 21.5 12 21.5s4.2 0 6.8-.3c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-2C23.3 9.1 23 7 23 7zm-13.5 8.5V8.5l8 3.5-8 3.5z"/></svg>
+                </div>
+                <div>
+                    <div class="yt-title">{{ yt.title }}</div>
+                    <div class="yt-sub">YouTube Search →</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+
+<!-- ── Chart.js ── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const examLabels = {{ chart_exams_json|safe }};
+    const scores     = {{ chart_scores_json|safe }};
+
+    const ctx = document.getElementById("scoreChart");
+    if (ctx && examLabels.length > 0) {
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: examLabels,
+                datasets: [{
+                    label: "Score (%)",
+                    data: scores,
+                    backgroundColor: scores.map(s =>
+                        s >= 60 ? "#22c55e" : s >= 40 ? "#f59e0b" : "#ef4444"
+                    ),
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true, max: 100,
+                        ticks: { callback: v => v + "%" },
+                        grid: { color: "#f1f5f9" }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+
+{% endif %}
+{% endblock %}

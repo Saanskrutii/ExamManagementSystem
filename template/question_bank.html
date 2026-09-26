@@ -1,0 +1,350 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Question Bank{% endblock %}
+{% block navbar_title %}Question Bank{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/question_bank.css' %}">
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+    }
+    .modal-backdrop.active {
+        display: flex;
+    }
+    .modal-card {
+        background: #ffffff;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 650px;
+        padding: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #64748b;
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="qb-page">
+
+  <!-- Page Header -->
+  <div class="qb-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 class="qb-title">Question Bank</h1>
+      <p class="qb-subtitle">Create, organize and manage questions across all your subjects</p>
+    </div>
+    <button class="qb-btn-primary" type="button" id="openAddQuestionModal">
+      <span class="qb-btn-icon">+</span>
+      Add Question
+    </button>
+  </div>
+
+  {# ── System Messages ── #}
+  {% if messages %}
+      {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}" style="padding: 12px 16px; border-radius: 8px; margin: 16px 0; background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;">
+              {{ message }}
+          </div>
+      {% endfor %}
+  {% endif %}
+
+  <!-- Toolbar: Filters -->
+  <div class="qb-toolbar" style="margin-top: 20px;">
+    <div class="qb-filter-group">
+      <div class="qb-select-wrap">
+        <select class="qb-select" id="subjectFilter">
+          <option value="">All Subjects</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject_id %}selected{% endif %}>
+              {{ s.name }} ({{ s.code }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="qb-select-wrap">
+        <select class="qb-select" id="typeFilter">
+          <option value="">All Question Types</option>
+          {% for val, label in question_types %}
+            <option value="{{ val }}" {% if val == selected_type %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="qb-select-wrap">
+        <select class="qb-select" id="difficultyFilter">
+          <option value="">All Difficulty</option>
+          {% for val, label in difficulties %}
+            <option value="{{ val }}" {% if val == selected_difficulty %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="qb-card" style="margin-top: 20px;">
+    {% if questions %}
+      <div class="qb-table-scroll">
+        <table class="qb-table">
+          <thead>
+            <tr>
+              <th class="qb-col-question">Question</th>
+              <th>Subject</th>
+              <th>Difficulty</th>
+              <th>Marks</th>
+              <th>Type</th>
+              <th class="qb-col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in questions %}
+              <tr>
+                <td class="qb-col-question">
+                  <span class="qb-question-text" style="font-weight: 500;">{{ q.question_text }}</span>
+                  {% if q.question_type == "MCQ" %}
+                    <div style="font-size: 0.825rem; color: #64748b; margin-top: 6px;">
+                      A) {{ q.option_a|default:"-" }} | B) {{ q.option_b|default:"-" }} | C) {{ q.option_c|default:"-" }} | D) {{ q.option_d|default:"-" }}
+                      <br><span style="color: #166534; font-weight: 600;">Ans: {{ q.correct_answer }}</span>
+                    </div>
+                  {% elif q.correct_answer %}
+                    <div style="font-size: 0.825rem; color: #166534; margin-top: 4px; font-weight: 600;">
+                      Ans: {{ q.correct_answer }}
+                    </div>
+                  {% endif %}
+                </td>
+                <td><span class="qb-tag qb-tag-subject">{{ q.subject.name }}</span></td>
+                <td>
+                  {% if q.difficulty == "EASY" %}
+                    <span class="qb-badge qb-badge-easy">Easy</span>
+                  {% elif q.difficulty == "HARD" %}
+                    <span class="qb-badge qb-badge-hard">Hard</span>
+                  {% else %}
+                    <span class="qb-badge qb-badge-medium">Medium</span>
+                  {% endif %}
+                </td>
+                <td class="qb-marks">{{ q.marks }}</td>
+                <td><span class="qb-type">{{ q.get_question_type_display }}</span></td>
+                <td class="qb-col-actions" style="display: flex; gap: 8px;">
+                  <a href="{% url 'edit_question' q.id %}" class="qb-icon-btn qb-icon-edit" title="Edit" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <form action="{% url 'delete_question' q.id %}" method="post" onsubmit="return confirm('Delete this question?');" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button class="qb-icon-btn qb-icon-delete" type="submit" title="Delete">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6h14Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="qb-empty-state">
+        <div class="qb-empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12h6M9 16h6M9 8h1M4 6a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 4v5a1 1 0 0 0 1 1h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="qb-empty-title">No questions found in Question Bank</h3>
+        <p class="qb-empty-text">Start building your question bank by adding your first question.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{# ── Add Question Modal ── #}
+<div class="modal-backdrop" id="addQuestionModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Question to Question Bank</h3>
+            <button type="button" class="modal-close" id="closeAddQuestionModal">&times;</button>
+        </div>
+
+        <form action="{% url 'add_question' %}" method="post">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label for="id_subject" class="form-label">Subject *</label>
+                    <select name="subject" id="id_subject" class="form-input" required>
+                        <option value="">-- Select Subject --</option>
+                        {% for s in subjects %}
+                            <option value="{{ s.id }}" {% if s.id == selected_subject_id %}selected{% endif %}>
+                                {{ s.name }} ({{ s.code }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_unit" class="form-label">Syllabus Unit (Optional)</label>
+                    <input type="text" name="unit" id="id_unit" class="form-input" placeholder="Unit ID (Optional)">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label for="id_question_type" class="form-label">Type *</label>
+                    <select name="question_type" id="id_question_type" class="form-input" required>
+                        <option value="MCQ">Multiple Choice (MCQ)</option>
+                        <option value="TRUE_FALSE">True / False</option>
+                        <option value="DESCRIPTIVE">Descriptive / Short Answer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_difficulty" class="form-label">Difficulty *</label>
+                    <select name="difficulty" id="id_difficulty" class="form-input" required>
+                        <option value="EASY">Easy</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HARD">Hard</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_marks" class="form-label">Marks *</label>
+                    <input type="number" name="marks" id="id_marks" class="form-input" value="1" min="1" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_question_text" class="form-label">Question Text *</label>
+                <textarea name="question_text" id="id_question_text" class="form-input" rows="3" placeholder="Type your question here..." required></textarea>
+            </div>
+
+            <div id="mcqOptionsBlock">
+                <div class="form-group">
+                    <label for="id_option_a" class="form-label">Option A</label>
+                    <input type="text" name="option_a" id="id_option_a" class="form-input" placeholder="Option A">
+                </div>
+                <div class="form-group">
+                    <label for="id_option_b" class="form-label">Option B</label>
+                    <input type="text" name="option_b" id="id_option_b" class="form-input" placeholder="Option B">
+                </div>
+                <div class="form-group">
+                    <label for="id_option_c" class="form-label">Option C</label>
+                    <input type="text" name="option_c" id="id_option_c" class="form-input" placeholder="Option C">
+                </div>
+                <div class="form-group">
+                    <label for="id_option_d" class="form-label">Option D</label>
+                    <input type="text" name="option_d" id="id_option_d" class="form-input" placeholder="Option D">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_correct_answer" class="form-label">Correct Answer / Option *</label>
+                <input type="text" name="correct_answer" id="id_correct_answer" class="form-input" placeholder="e.g. A (for MCQ) or True / False or sample answer" required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" id="cancelAddQuestionModal">Cancel</button>
+                <button type="submit" class="btn-primary">Save Question</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var subjectFilter = document.getElementById("subjectFilter");
+        var typeFilter = document.getElementById("typeFilter");
+        var difficultyFilter = document.getElementById("difficultyFilter");
+
+        function applyFilters() {
+            var s = subjectFilter ? subjectFilter.value : "";
+            var t = typeFilter ? typeFilter.value : "";
+            var d = difficultyFilter ? difficultyFilter.value : "";
+
+            var params = new URLSearchParams();
+            if (s) params.append("subject", s);
+            if (t) params.append("type", t);
+            if (d) params.append("difficulty", d);
+
+            window.location.href = "{% url 'question_bank' %}?" + params.toString();
+        }
+
+        if (subjectFilter) subjectFilter.addEventListener("change", applyFilters);
+        if (typeFilter) typeFilter.addEventListener("change", applyFilters);
+        if (difficultyFilter) difficultyFilter.addEventListener("change", applyFilters);
+
+        // Modal JS
+        var modal = document.getElementById("addQuestionModal");
+        var openBtn = document.getElementById("openAddQuestionModal");
+        var closeBtn = document.getElementById("closeAddQuestionModal");
+        var cancelBtn = document.getElementById("cancelAddQuestionModal");
+
+        if (openBtn) openBtn.addEventListener("click", function() { modal.classList.add("active"); });
+        if (closeBtn) closeBtn.addEventListener("click", function() { modal.classList.remove("active"); });
+        if (cancelBtn) cancelBtn.addEventListener("click", function() { modal.classList.remove("active"); });
+    });
+</script>
+{% endblock %}

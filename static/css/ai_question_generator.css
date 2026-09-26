@@ -1,0 +1,335 @@
+/* ==========================================================
+   AI Question Generator Page
+   Scoped under .aiqg-page — matches dashboard.css /
+   question_bank.css design language (soft shadows, rounded
+   cards, indigo accent, SaaS admin look)
+   ========================================================== */
+
+.aiqg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #1F2937;
+}
+
+/* ---------- Header ---------- */
+.aiqg-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.aiqg-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.aiqg-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+/* ---------- Form Card ---------- */
+.aiqg-form-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+}
+
+.aiqg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.aiqg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aiqg-field-wide {
+  grid-column: span 3;
+}
+
+.aiqg-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.aiqg-select-wrap {
+  position: relative;
+}
+
+.aiqg-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 9px;
+  padding: 11px 34px 11px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1L5 5L9 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.aiqg-select:hover {
+  border-color: #C7D2FE;
+  background-color: #FFFFFF;
+}
+
+.aiqg-select:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.aiqg-input {
+  width: 100%;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 9px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  color: #374151;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.aiqg-input::placeholder {
+  color: #9CA3AF;
+}
+
+.aiqg-input:focus {
+  outline: none;
+  border-color: #4F46E5;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ---------- Form Actions ---------- */
+.aiqg-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #F1F2F4;
+}
+
+.aiqg-btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: linear-gradient(135deg, #4F46E5, #6366F1);
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.1), 0 6px 16px rgba(79, 70, 229, 0.24);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.aiqg-btn-generate:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.12), 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+.aiqg-btn-generate:active {
+  transform: translateY(1px);
+}
+
+/* ---------- Results Section ---------- */
+.aiqg-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aiqg-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aiqg-results-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.aiqg-results-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  background: #F3F4F6;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.aiqg-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+/* ---------- Question Card ---------- */
+.aiqg-question-card {
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.aiqg-question-card:hover {
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+  transform: translateY(-2px);
+}
+
+.aiqg-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.aiqg-card-type {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.aiqg-question-text {
+  margin: 0 0 18px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #1F2937;
+  font-weight: 500;
+  flex: 1;
+}
+
+/* Difficulty badges (shared visual language with question bank) */
+.aiqg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.aiqg-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.aiqg-badge-easy {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.aiqg-badge-medium {
+  background: #FFFAEB;
+  color: #B54708;
+}
+
+.aiqg-badge-hard {
+  background: #FEF3F2;
+  color: #B42318;
+}
+
+/* Card Actions */
+.aiqg-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #F1F2F4;
+}
+
+.aiqg-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #4B5563;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.aiqg-action-btn:hover {
+  background: #F5F6FF;
+  border-color: #C7D2FE;
+  color: #4338CA;
+}
+
+.aiqg-action-regenerate:hover {
+  background: #EEF2FF;
+  border-color: #A5B4FC;
+  color: #4338CA;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 992px) {
+  .aiqg-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .aiqg-field-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .aiqg-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aiqg-field-wide {
+    grid-column: span 1;
+  }
+
+  .aiqg-form-actions {
+    justify-content: stretch;
+  }
+
+  .aiqg-btn-generate {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .aiqg-card-actions {
+    flex-direction: column;
+  }
+}

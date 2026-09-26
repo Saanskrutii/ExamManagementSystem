@@ -1,0 +1,355 @@
+/* =========================================================
+   Syllabus Page — Content Styles
+   Relies on shared design tokens already defined in
+   dashboard.css (:root variables). Re-declared below as a
+   safe fallback so this file also works if loaded standalone.
+   ========================================================= */
+
+:root {
+    --primary: #2563EB;
+    --primary-hover: #1D4ED8;
+    --primary-light: #EFF4FF;
+    --background: #F8FAFC;
+    --card: #FFFFFF;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --border: #E5E7EB;
+    --border-focus: #93C5FD;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
+
+    --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.75rem;
+
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 18px;
+    --radius-full: 999px;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow: 0 4px 6px rgba(15, 23, 42, 0.05), 0 10px 25px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.10);
+
+    --transition-fast: 0.15s ease;
+    --transition: 0.25s ease;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* =========================================================
+   Top Controls Toolbar
+   ========================================================= */
+
+.syllabus-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.subject-select-wrap {
+    min-width: 260px;
+}
+
+.subject-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 2.25rem 0.65rem var(--space-md);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><path d='M6 9l6 6 6-6' stroke='%2364748B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 18px;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.subject-select:hover {
+    border-color: var(--border-focus);
+}
+
+.subject-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    padding: 0.7rem 1.25rem;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: #FFFFFF;
+    background-color: var(--primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+/* =========================================================
+   Syllabus Grid
+   ========================================================= */
+
+.syllabus-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+/* =========================================================
+   Syllabus Card
+   ========================================================= */
+
+.syllabus-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.syllabus-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-4px);
+}
+
+/* --- Top section --- */
+
+.syllabus-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+.file-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+
+.file-type-pdf {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.file-type-doc {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.syllabus-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.syllabus-subject-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.syllabus-file-name {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* --- Middle section: metadata --- */
+
+.syllabus-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background-color: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
+}
+
+.meta-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.meta-value {
+    font-size: var(--font-size-sm);
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* --- Bottom section: action buttons --- */
+
+.syllabus-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+}
+
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.6rem var(--space-xs);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--primary);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary-light);
+    border-color: var(--border-focus);
+    transform: translateY(-1px);
+}
+
+.btn-outline-danger {
+    color: var(--danger);
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--danger-light);
+    border-color: var(--danger);
+}
+
+/* =========================================================
+   Empty State
+   ========================================================= */
+
+.empty-state-container {
+    display: none; /* Enable via {% if not syllabus_files %} once backend is connected */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-2xl);
+    box-shadow: var(--shadow-sm);
+}
+
+.empty-state-icon {
+    font-size: 2.75rem;
+    line-height: 1;
+    margin-bottom: var(--space-md);
+}
+
+.empty-state-text {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 1200px) {
+    .syllabus-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .syllabus-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .syllabus-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .subject-select-wrap {
+        min-width: 0;
+    }
+
+    .syllabus-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .syllabus-actions {
+        grid-template-columns: 1fr;
+    }
+}

@@ -20,57 +20,55 @@
                 <p class="auth-subtitle">Sign in to continue</p>
             </div>
 
-            <form class="auth-form" action="#" method="post" novalidate>
+            {# ── Display error messages (invalid login, etc.) ── #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# ── Display success/info messages (logged out, account created, etc.) ── #}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {# ── Login Form ── #}
+            {# csrf_token is REQUIRED — it prevents Cross-Site Request Forgery attacks #}
+            {# Without it, Django will reject the form submission with a 403 error #}
+            <form class="auth-form" action="{% url 'login' %}" method="post" novalidate>
+                {% csrf_token %}
 
                 <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        class="form-input"
-                        placeholder="you@example.com"
-                        autocomplete="email"
-                        required
-                    >
+                    <label for="username" class="form-label">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <span class="form-error">{{ form.username.errors.0 }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <div class="password-wrapper">
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="form-input"
-                            placeholder="Enter your password"
-                            autocomplete="current-password"
-                            required
-                        >
-                        <span class="password-toggle-icon" role="img" aria-label="Show or hide password">
-                            <!-- eye icon placeholder (JS to be added later) -->
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
-                            </svg>
-                        </span>
-                    </div>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <span class="form-error">{{ form.password.errors.0 }}</span>
+                    {% endif %}
                 </div>
 
-                <div class="form-row">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="remember" name="remember" class="checkbox-input">
-                        <span>Remember me</span>
-                    </label>
-
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
-
-                <a href="{% url 'teacher_dashboard' %}" class="login-btn">
-                    Login
-                </a>
+                <button type="submit" class="btn-primary">
+                    Sign In
+                </button>
 
             </form>
+
+            <div class="auth-switch">
+                <p>Don't have an account? <a href="{% url 'signup' %}" class="auth-switch-link">Sign Up</a></p>
+            </div>
 
         </div>
 

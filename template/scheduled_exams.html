@@ -1,0 +1,132 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Scheduled Exams{% endblock %}
+{% block navbar_title %}Scheduled Exams{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exams-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .exam-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+    }
+    .exam-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .badge-live { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+    .badge-scheduled { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+    .badge-completed { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+
+    .exam-meta-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 14px 0;
+        padding: 10px 0;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.875rem;
+        color: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="exams-header">
+    <div>
+        <h1 style="margin: 0; font-size: 1.5rem; color: #0f172a;">Scheduled Exams</h1>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.95rem;">Manage created tests, student access codes, and exam schedules</p>
+    </div>
+    <a href="{% url 'create_test' %}" class="btn-primary" style="text-decoration: none; padding: 10px 20px; display: inline-block;">
+        + Create New Exam
+    </a>
+</div>
+
+{# ── System Banners ── #}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if exams %}
+    <div class="exam-grid">
+        {% for e in exams %}
+            <div class="exam-card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        {% if e.dynamic_status == "LIVE" %}
+                            <span class="badge-live">🟢 LIVE NOW</span>
+                        {% elif e.dynamic_status == "COMPLETED" %}
+                            <span class="badge-completed">🏁 COMPLETED</span>
+                        {% else %}
+                            <span class="badge-scheduled">📅 SCHEDULED</span>
+                        {% endif %}
+
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">
+                            {{ e.subject.name|default:"General" }} ({{ e.subject.code|default:"" }})
+                        </span>
+                    </div>
+
+                    <h3 style="margin: 14px 0 6px 0; font-size: 1.2rem; color: #0f172a;">{{ e.title }}</h3>
+                    <div style="font-size: 0.875rem; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 8px;">
+                        🔑 Access Code: <strong style="color: #2563eb; font-size: 1rem; letter-spacing: 0.5px;">{{ e.access_code }}</strong>
+                    </div>
+
+                    <div class="exam-meta-row">
+                        <div>⏱ Duration: <strong>{{ e.duration_minutes }} Mins</strong></div>
+                        <div>📊 Marks: <strong>{{ e.total_marks }}</strong></div>
+                        <div>📄 Questions: <strong>{{ e.question_count }}</strong></div>
+                    </div>
+
+                    <div style="font-size: 0.825rem; color: #64748b; line-height: 1.5;">
+                        📅 <strong>Starts:</strong> {{ e.formatted_start }}<br>
+                        ⏰ <strong>Ends:</strong> {{ e.formatted_end }}
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+                    <a href="{% url 'edit_exam' e.id %}"
+                       style="padding: 6px 14px; font-size: 0.85rem; display:inline-flex; align-items:center; gap:5px;
+                              background:#eff6ff; color:#1d4ed8; border:1.5px solid #bfdbfe; border-radius:7px;
+                              text-decoration:none; font-weight:600;">
+                        ✏️ Edit
+                    </a>
+                    <form action="{% url 'delete_exam' e.id %}" method="post" onsubmit="return confirm('Delete this scheduled exam?');" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-outline btn-outline-danger" style="padding: 6px 14px; font-size: 0.85rem;">
+                            🗑 Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div style="text-align: center; padding: 48px 24px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 20px;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">📝</div>
+        <h3 style="margin: 0; color: #0f172a;">No Scheduled Exams Found</h3>
+        <p style="color: #64748b; margin: 8px 0 20px 0;">Create your first exam using Manual Selection or PyMongo Auto-Gen rules.</p>
+        <a href="{% url 'create_test' %}" class="btn-primary" style="text-decoration: none; padding: 10px 20px; display: inline-block;">
+            + Create New Exam
+        </a>
+    </div>
+{% endif %}
+
+{% endblock %}

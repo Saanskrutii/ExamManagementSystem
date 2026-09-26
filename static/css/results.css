@@ -1,0 +1,369 @@
+/* ==========================================================
+   Results Page
+   Scoped under .res-page — matches dashboard.css /
+   question_bank.css / student_submissions.css design language
+   (soft shadows, rounded cards, indigo accent, SaaS admin)
+   ========================================================== */
+
+.res-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #1F2937;
+}
+
+/* ---------- Header ---------- */
+.res-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.res-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.res-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.res-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.res-btn-primary,
+.res-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.res-btn-primary {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: none;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.08), 0 4px 10px rgba(79, 70, 229, 0.18);
+}
+
+.res-btn-primary:hover {
+  background: #4338CA;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1), 0 6px 14px rgba(79, 70, 229, 0.24);
+}
+
+.res-btn-secondary {
+  background: #FFFFFF;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+}
+
+.res-btn-secondary:hover {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.res-btn-primary:active,
+.res-btn-secondary:active {
+  transform: translateY(1px);
+}
+
+/* ---------- Toolbar / Filters ---------- */
+.res-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+
+.res-select-wrap {
+  position: relative;
+}
+
+.res-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 9px;
+  padding: 10px 34px 10px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1L5 5L9 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.res-select:hover {
+  border-color: #C7D2FE;
+  background-color: #FFFFFF;
+}
+
+.res-select:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ---------- Summary Cards ---------- */
+.res-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.res-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+}
+
+.res-summary-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.res-icon-average {
+  background: #EEF2FF;
+  color: #4338CA;
+}
+
+.res-icon-highest {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.res-icon-lowest {
+  background: #FEF3F2;
+  color: #B42318;
+}
+
+.res-icon-pass {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.res-summary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.res-summary-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.res-summary-value {
+  font-size: 21px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.res-summary-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9CA3AF;
+}
+
+/* ---------- Table Card ---------- */
+.res-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 8px 24px rgba(16, 24, 40, 0.03);
+  overflow: hidden;
+}
+
+.res-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.res-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.res-table thead th {
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+  background: #F9FAFB;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.res-table tbody td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #F1F2F4;
+  font-size: 14px;
+  color: #374151;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.res-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.res-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.res-table tbody tr:hover {
+  background: #FAFAFF;
+}
+
+/* Student cell */
+.res-student {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.res-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #4338CA;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.res-student-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.res-roll {
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.res-marks {
+  font-weight: 600;
+  color: #111827;
+}
+
+.res-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* Result badges */
+.res-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.res-result::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.res-result-pass {
+  background: #ECFDF3;
+  color: #027A48;
+}
+
+.res-result-fail {
+  background: #FEF3F2;
+  color: #B42318;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .res-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .res-header-actions {
+    width: 100%;
+  }
+
+  .res-btn-primary,
+  .res-btn-secondary {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .res-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .res-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .res-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

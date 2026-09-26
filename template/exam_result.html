@@ -1,0 +1,236 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_title %}Exam Result{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Scorecard ── */
+    .scorecard {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+        padding: 32px; max-width: 640px; margin: 0 auto 32px;
+        box-shadow: 0 4px 20px rgba(15,23,42,.07); text-align: center;
+    }
+    .score-circle {
+        width: 140px; height: 140px; border-radius: 50%;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; margin: 20px auto; border: 7px solid;
+    }
+    .score-circle.pass { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+    .score-circle.fail { border-color: #ef4444; background: #fef2f2; color: #991b1b; }
+    .score-num  { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+    .score-denom{ font-size: .82rem; font-weight: 600; padding-top: 4px; margin-top: 4px; border-top: 1px solid currentColor; opacity:.7; }
+
+    .status-badge {
+        display: inline-block; padding: 6px 18px; border-radius: 8px;
+        font-weight: 700; font-size: .9rem; letter-spacing: .04em;
+        margin-bottom: 12px;
+    }
+    .status-badge.pass { background:#dcfce7; color:#15803d; border:1px solid #86efac; }
+    .status-badge.fail { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+
+    .meta-row {
+        display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        margin: 16px 0; font-size: .85rem;
+    }
+    .meta-chip {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 8px 14px; color: #334155; font-weight: 500;
+    }
+    .meta-chip strong { color: #0f172a; }
+
+    /* ── Quick stats ── */
+    .quick-stats {
+        display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        margin: 20px 0;
+    }
+    .qs-box { flex: 1; min-width: 90px; border-radius: 10px; padding: 12px 10px; text-align: center; }
+    .qs-num  { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+    .qs-lbl  { font-size: .72rem; font-weight: 600; margin-top: 4px; }
+    .qs-correct { background: #dcfce7; color: #166534; }
+    .qs-wrong   { background: #fee2e2; color: #991b1b; }
+    .qs-skipped { background: #fef9c3; color: #854d0e; }
+
+    /* ── Answer Review ── */
+    .review-section { margin-top: 8px; }
+    .review-title {
+        font-size: 1rem; font-weight: 700; color: #0f172a;
+        margin-bottom: 16px; padding-bottom: 10px;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .q-card {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 20px; margin-bottom: 14px;
+        box-shadow: 0 2px 6px rgba(15,23,42,.03);
+        border-left: 4px solid #e2e8f0;
+        transition: box-shadow .2s;
+    }
+    .q-card.correct { border-left-color: #22c55e; }
+    .q-card.wrong   { border-left-color: #ef4444; }
+    .q-card.skipped { border-left-color: #f59e0b; }
+    .q-card.descriptive { border-left-color: #6366f1; }
+
+    .q-header {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 12px; margin-bottom: 12px;
+    }
+    .q-num { font-size: .75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+    .q-outcome {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
+        white-space: nowrap; flex-shrink: 0;
+    }
+    .outcome-correct  { background: #dcfce7; color: #166534; }
+    .outcome-wrong    { background: #fee2e2; color: #991b1b; }
+    .outcome-skipped  { background: #fef9c3; color: #854d0e; }
+    .outcome-desc     { background: #ede9fe; color: #6d28d9; }
+
+    .q-text { font-size: .92rem; font-weight: 600; color: #0f172a; line-height: 1.5; margin-bottom: 14px; }
+
+    .ans-row {
+        display: flex; gap: 10px; flex-wrap: wrap; font-size: .82rem;
+    }
+    .ans-box {
+        flex: 1; min-width: 160px; border-radius: 8px; padding: 10px 14px;
+    }
+    .ans-box-label { font-size: .7rem; font-weight: 700; letter-spacing: .05em; margin-bottom: 4px; }
+    .ans-student { background: #f8fafc; border: 1px solid #e2e8f0; }
+    .ans-student.wrong-ans { background: #fef2f2; border-color: #fca5a5; }
+    .ans-student.correct-ans { background: #f0fdf4; border-color: #86efac; }
+    .ans-correct-box { background: #f0fdf4; border: 1px solid #86efac; }
+    .ans-val { font-weight: 600; color: #0f172a; }
+
+    .options-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;
+    }
+    .opt {
+        padding: 7px 12px; border-radius: 7px; border: 1px solid #e2e8f0;
+        font-size: .82rem; color: #334155;
+    }
+    .opt.is-correct { background: #dcfce7; border-color: #86efac; font-weight: 700; color: #166534; }
+    .opt.is-student-wrong { background: #fee2e2; border-color: #fca5a5; font-weight: 700; color: #991b1b; }
+</style>
+
+<!-- ── Scorecard ── -->
+<div class="scorecard">
+    <h2 style="margin:0 0 4px; font-size:1.3rem; color:#0f172a;">{{ result.exam_title }}</h2>
+    <p style="color:#64748b; font-size:.85rem; margin:0 0 16px;">
+        {{ result.subject_name }}{% if result.subject_code %} ({{ result.subject_code }}){% endif %}
+    </p>
+
+    <div class="score-circle {% if result.status == 'PASSED' %}pass{% else %}fail{% endif %}">
+        <span class="score-num">{{ result.score }}</span>
+        <span class="score-denom">out of {{ result.total_marks }}</span>
+    </div>
+
+    <div>
+        <span class="status-badge {% if result.status == 'PASSED' %}pass{% else %}fail{% endif %}">
+            {% if result.status == "PASSED" %}🎉 PASSED{% else %}🏁 FAILED{% endif %}
+        </span>
+    </div>
+
+    {% if result.status == "FAILED" %}
+    <p style="color:#991b1b; font-size:.85rem; margin:8px 0 0;">Passing marks required: <strong>{{ result.passing_marks }}</strong></p>
+    {% endif %}
+
+    <div class="meta-row">
+        <div class="meta-chip">📈 <strong>{{ result.percentage }}%</strong></div>
+        <div class="meta-chip">📅 <strong>{{ result.evaluated_at|date:"M d, Y · h:i A" }}</strong></div>
+    </div>
+
+    <!-- Quick stats -->
+    {% if answer_review %}
+    <div class="quick-stats">
+        <div class="qs-box qs-correct">
+            <div class="qs-num">{{ correct_count }}</div>
+            <div class="qs-lbl">✅ Correct</div>
+        </div>
+        <div class="qs-box qs-wrong">
+            <div class="qs-num">{{ wrong_count }}</div>
+            <div class="qs-lbl">❌ Wrong</div>
+        </div>
+        <div class="qs-box qs-skipped">
+            <div class="qs-num">{{ skipped_count }}</div>
+            <div class="qs-lbl">⏭ Skipped</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <a href="{% url 'student_dashboard' %}" class="btn-outline" style="text-decoration:none; padding:10px 22px; display:inline-block; font-size:.88rem;">
+            ← Dashboard
+        </a>
+        <a href="{% url 'download_report_card' result.id %}" class="btn-primary" style="background:#16a34a; border-color:#16a34a; text-decoration:none; padding:10px 22px; display:inline-block; font-size:.88rem;">
+            📄 Download Report Card (PDF)
+        </a>
+        <a href="{% url 'student_analytics' %}" class="btn-primary" style="text-decoration:none; padding:10px 22px; display:inline-block; font-size:.88rem;">
+            📊 View My Analytics
+        </a>
+    </div>
+</div>
+
+<!-- ── Answer Review ── -->
+{% if answer_review %}
+<div class="review-section">
+    <div class="review-title">📋 Answer Review — Question by Question</div>
+
+    {% for q in answer_review %}
+    <div class="q-card {{ q.outcome }}">
+        <div class="q-header">
+            <div class="q-num">Question {{ q.number }} · {{ q.marks }} mark{{ q.marks|pluralize }} · {{ q.question_type }}</div>
+            {% if q.outcome == "correct" %}
+                <span class="q-outcome outcome-correct">✅ Correct</span>
+            {% elif q.outcome == "wrong" %}
+                <span class="q-outcome outcome-wrong">❌ Wrong</span>
+            {% elif q.outcome == "skipped" %}
+                <span class="q-outcome outcome-skipped">⏭ Skipped</span>
+            {% else %}
+                <span class="q-outcome outcome-desc">✏️ Descriptive</span>
+            {% endif %}
+        </div>
+
+        <div class="q-text">{{ q.question_text }}</div>
+
+        {% if q.question_type == "MCQ" and q.options %}
+        <div class="options-grid">
+            {% for key, val in q.options.items %}
+            <div class="opt
+                {% if key == q.correct_ans %}is-correct{% endif %}
+                {% if key == q.student_ans and q.outcome == 'wrong' %}is-student-wrong{% endif %}">
+                <strong>{{ key }}.</strong> {{ val }}
+                {% if key == q.correct_ans %} ✅{% endif %}
+                {% if key == q.student_ans and q.outcome == 'wrong' %} ← Your answer{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif q.question_type == "DESCRIPTIVE" %}
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:.85rem; color:#334155; margin-bottom:10px;">
+            <div style="font-size:.7rem; font-weight:700; color:#94a3b8; margin-bottom:6px;">YOUR ANSWER</div>
+            {{ q.student_ans|linebreaksbr }}
+        </div>
+        <div style="background:#ede9fe; border:1px solid #c4b5fd; border-radius:8px; padding:12px; font-size:.85rem; color:#4c1d95;">
+            <div style="font-size:.7rem; font-weight:700; margin-bottom:6px;">SAMPLE ANSWER / KEY</div>
+            {{ q.correct_ans|linebreaksbr }}
+        </div>
+        {% else %}
+        <!-- True/False -->
+        <div class="ans-row">
+            <div class="ans-box ans-student {% if q.outcome == 'wrong' %}wrong-ans{% elif q.outcome == 'correct' %}correct-ans{% endif %}">
+                <div class="ans-box-label" style="color:#64748b;">YOUR ANSWER</div>
+                <div class="ans-val">{{ q.student_ans }}</div>
+            </div>
+            {% if q.outcome != "correct" %}
+            <div class="ans-box ans-correct-box">
+                <div class="ans-box-label" style="color:#16a34a;">CORRECT ANSWER</div>
+                <div class="ans-val" style="color:#166534;">{{ q.correct_ans }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

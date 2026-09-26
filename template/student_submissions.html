@@ -1,0 +1,226 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Student Submissions{% endblock %}
+{% block navbar_title %}Student Submissions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-heading { margin-bottom: 24px; }
+
+    .summary-bar {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+    }
+    .summary-chip {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 22px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+        box-shadow: 0 2px 6px rgba(15,23,42,.04);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .summary-chip .chip-num {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .chip-pass  { border-left: 4px solid #22c55e; }
+    .chip-fail  { border-left: 4px solid #ef4444; }
+    .chip-total { border-left: 4px solid #6366f1; }
+
+    .table-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(15,23,42,.05);
+    }
+    .table-card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .table-card-header h3 { margin: 0; font-size: 1rem; color: #0f172a; font-weight: 700; }
+
+    .ss-table { width: 100%; border-collapse: collapse; }
+    .ss-table thead th {
+        background: #f8fafc;
+        padding: 12px 16px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .ss-table tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .15s;
+    }
+    .ss-table tbody tr:last-child { border-bottom: none; }
+    .ss-table tbody tr:hover { background: #f8fafc; }
+    .ss-table td { padding: 14px 16px; font-size: 0.88rem; color: #334155; vertical-align: middle; }
+
+    .avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff; font-size: 0.72rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .student-cell { display: flex; align-items: center; gap: 10px; }
+    .student-name { font-weight: 600; color: #0f172a; }
+    .student-user { font-size: 0.78rem; color: #94a3b8; }
+
+    .badge {
+        display: inline-flex; align-items: center;
+        padding: 3px 12px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700; letter-spacing: .04em;
+    }
+    .badge-pass { background: #dcfce7; color: #166534; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
+    .badge-pending { background: #fef9c3; color: #854d0e; }
+
+    .score-val { font-weight: 700; color: #0f172a; font-size: 0.95rem; }
+    .pct-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+    .pct-bar-bg { flex: 1; height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .pct-bar-fill { height: 100%; border-radius: 4px; }
+
+    .empty-state {
+        padding: 56px 24px;
+        text-align: center;
+        color: #94a3b8;
+    }
+    .empty-state svg { width: 56px; height: 56px; margin-bottom: 12px; opacity: .4; }
+    .empty-state p { font-size: 0.95rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <h2 class="page-title">Student Submissions</h2>
+    <p class="page-subtitle">Monitor real-time student exam submissions and scores</p>
+</div>
+
+<!-- Summary chips -->
+{% if submissions %}
+{% with total=submissions|length %}
+<div class="summary-bar">
+    <div class="summary-chip chip-total">
+        <div>
+            <div class="chip-num">{{ total }}</div>
+            <div style="font-size:.75rem; color:#64748b; font-weight:500;">Total Submissions</div>
+        </div>
+    </div>
+    <div class="summary-chip chip-pass">
+        <div>
+            <div class="chip-num" style="color:#166534;">
+                {% with passed=0 %}
+                {% for s in submissions %}{% if s.status == "PASSED" %}{% with passed=passed|add:1 %}{% endwith %}{% endif %}{% endfor %}
+                {{ submissions|length }}
+                {% endwith %}
+            </div>
+            <div style="font-size:.75rem; color:#64748b; font-weight:500;">See table below</div>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endif %}
+
+<!-- Table Card -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h3>📋 All Submissions</h3>
+        <span style="font-size:0.82rem; color:#64748b;">{{ submissions|length }} record{{ submissions|length|pluralize }}</span>
+    </div>
+
+    {% if submissions %}
+    <div style="overflow-x: auto;">
+        <table class="ss-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Exam</th>
+                    <th>Submitted At</th>
+                    <th style="text-align:center;">Score</th>
+                    <th style="text-align:center;">Percentage</th>
+                    <th style="text-align:center;">Result</th>
+                    <th style="text-align:right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td style="color:#94a3b8; font-size:0.8rem;">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="student-cell">
+                            <div class="avatar">{{ sub.student_name|slice:":2"|upper }}</div>
+                            <div>
+                                <div class="student-name">{{ sub.student_name }}</div>
+                                <div class="student-user">@{{ sub.student_username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-weight:600; color:#1e293b;">{{ sub.exam_title }}</span>
+                    </td>
+                    <td style="color:#64748b; font-size:0.82rem; white-space:nowrap;">
+                        {{ sub.submitted_at|date:"M d, Y" }}<br>
+                        <span style="color:#94a3b8;">{{ sub.submitted_at|date:"h:i A" }}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="score-val">{{ sub.score }}<span style="color:#94a3b8; font-weight:400;">/{{ sub.total_marks }}</span></span>
+                    </td>
+                    <td>
+                        <div class="pct-bar-wrap">
+                            <div class="pct-bar-bg">
+                                <div class="pct-bar-fill" style="width:{{ sub.percentage }}%;
+                                    background: {% if sub.percentage >= 60 %}#22c55e{% elif sub.percentage >= 40 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                            </div>
+                            <span style="font-size:0.82rem; font-weight:600; min-width:36px; color:#1e293b;">{{ sub.percentage }}%</span>
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if sub.status == "PASSED" %}
+                            <span class="badge badge-pass">✅ PASS</span>
+                        {% elif sub.status == "FAILED" %}
+                            <span class="badge badge-fail">❌ FAIL</span>
+                        {% else %}
+                            <span class="badge badge-pending">⏳ PENDING</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        <a href="{% url 'teacher_submission_review' sub.id %}" style="display:inline-block; background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:.8rem; font-weight:600; text-decoration:none;">
+                            🔍 Inspect Sheet
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="14" y="8" width="36" height="48" rx="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M22 20h20M22 28h20M22 36h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p>No student submissions yet.<br>Submissions will appear here once students complete exams.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

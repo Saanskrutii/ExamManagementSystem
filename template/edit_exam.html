@@ -1,0 +1,98 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Edit Exam{% endblock %}
+{% block navbar_title %}Edit Exam{% endblock %}
+
+{% block content %}
+<style>
+    .edit-card {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+        padding: 32px; max-width: 620px; margin: 0 auto;
+        box-shadow: 0 4px 20px rgba(15,23,42,.06);
+    }
+    .edit-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 6px; }
+    .edit-sub   { font-size: .82rem; color: #94a3b8; margin-bottom: 28px; }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: .82rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .form-input {
+        width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
+        border-radius: 8px; font-size: .9rem; color: #0f172a;
+        background: #f8fafc; box-sizing: border-box; transition: border .2s;
+    }
+    .form-input:focus { outline: none; border-color: #6366f1; background: #fff; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+    .info-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+        padding: 10px 14px; font-size: .82rem; color: #1d4ed8;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="page-heading">
+    <h2 class="page-title">✏️ Edit Exam</h2>
+    <p class="page-subtitle">Update exam details — questions cannot be changed here</p>
+</div>
+
+<div class="edit-card">
+    <div class="info-chip">
+        ℹ️ You can update the title, schedule, duration, passing marks, and access code. To change questions, delete and recreate the exam.
+    </div>
+
+    {% if messages %}
+        {% for msg in messages %}
+        <div style="background:{% if msg.tags == 'error' %}#fee2e2{% else %}#dcfce7{% endif %}; border:1px solid {% if msg.tags == 'error' %}#fca5a5{% else %}#86efac{% endif %}; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:.88rem; color:{% if msg.tags == 'error' %}#991b1b{% else %}#166534{% endif %};">
+            {{ msg }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label">Exam Title *</label>
+            <input type="text" name="title" class="form-input" value="{{ exam.title }}" required placeholder="e.g. Midterm Exam">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Start Date & Time</label>
+                <input type="datetime-local" name="start_time" class="form-input" value="{{ exam.start_time }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">End Date & Time</label>
+                <input type="datetime-local" name="end_time" class="form-input" value="{{ exam.end_time }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Duration (Minutes)</label>
+                <input type="number" name="duration_minutes" class="form-input" value="{{ exam.duration_minutes }}" min="1" max="300" placeholder="e.g. 60">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Passing Marks</label>
+                <input type="number" name="passing_marks" class="form-input" value="{{ exam.passing_marks }}" min="0" placeholder="e.g. 20">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Access Code</label>
+            <input type="text" name="access_code" class="form-input" value="{{ exam.access_code }}" placeholder="e.g. EXAM2026">
+        </div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn-primary" style="flex:1; padding:12px;">
+                💾 Save Changes
+            </button>
+            <a href="{% url 'scheduled_exams' %}" class="btn-outline" style="flex:1; text-align:center; text-decoration:none; padding:12px; display:block; box-sizing:border-box;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

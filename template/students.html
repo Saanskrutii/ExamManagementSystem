@@ -1,0 +1,70 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Students{% endblock %}
+{% block navbar_title %}Students{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/students.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="st-page">
+
+  <!-- Page Header -->
+  <div class="st-header">
+    <div>
+      <h1 class="st-title">Students</h1>
+      <p class="st-subtitle">Monitor and review student user accounts registered in the portal</p>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="st-card" style="margin-top: 20px;">
+    <div class="st-table-scroll">
+      <table class="st-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if students %}
+            {% for st in students %}
+              <tr>
+                <td>
+                  <div class="st-student">
+                    <div class="st-avatar">{{ st.username|slice:":2"|upper }}</div>
+                    <span class="st-student-name">{{ st.first_name }} {{ st.last_name }}</span>
+                  </div>
+                </td>
+                <td class="st-roll">{{ st.username }}</td>
+                <td class="st-email">{{ st.email }}</td>
+                <td>Student</td>
+                <td>
+                  {% if st.is_active %}
+                    <span class="st-status st-status-active">Active</span>
+                  {% else %}
+                    <span class="st-status st-status-inactive">Inactive</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: #64748b; padding: 32px;">No registered student accounts found.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

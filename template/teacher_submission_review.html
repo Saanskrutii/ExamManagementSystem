@@ -1,0 +1,185 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block page_title %}Teacher Answer Sheet Inspection{% endblock %}
+{% block navbar_title %}Student Answer Sheet Inspection{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto; padding: 24px;">
+
+    <div style="margin-bottom: 16px;">
+        <a href="{% url 'student_submissions' %}" style="color: #2563eb; font-weight: 600; text-decoration: none;">
+            ← Back to Submissions Dashboard
+        </a>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">
+                    {{ subject_code }} - {{ subject_name }}
+                </span>
+                <h1 style="font-size: 1.6rem; color: #0f172a; font-weight: 800; margin: 10px 0 4px;">
+                    {{ exam.title }}
+                </h1>
+                <p style="color: #64748b; margin: 0; font-size: 0.9rem;">
+                    Student Name: <strong>{{ student_user.first_name }} {{ student_user.last_name }} ({{ student_user.username }})</strong> | 
+                    Submitted: {{ attempt.submitted_at|date:"M d, Y h:i A" }}
+                </p>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-size: 1.8rem; font-weight: 800; color: {% if result.status == 'PASSED' %}#166534{% else %}#991b1b{% endif %};">
+                    {{ result.score }} / {{ result.total_marks }}
+                </div>
+                <div style="font-size: 0.9rem; font-weight: 700; color: #64748b;">
+                    Percentage: <span style="color: #2563eb;">{{ result.percentage }}%</span>
+                </div>
+                <span style="display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; background: {% if result.status == 'PASSED' %}#dcfce7{% else %}#fee2e2{% endif %}; color: {% if result.status == 'PASSED' %}#166534{% else %}#991b1b{% endif %};">
+                    {{ result.status }}
+                </span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Correct</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #166534;">{{ correct_count }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Wrong</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #991b1b;">{{ wrong_count }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Skipped</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #d97706;">{{ skipped_count }}</div>
+            </div>
+        </div>
+    </div>    <!-- Question Response Inspection Section -->
+    <h2 style="font-size: 1.2rem; color: #0f172a; font-weight: 700; margin-bottom: 16px;">
+        Student Answer Sheet &amp; Question Time Analysis
+    </h2>
+
+    {% for item in answer_review %}
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid {% if item.outcome == 'correct' %}#86efac{% elif item.outcome == 'wrong' %}#fca5a5{% else %}#cbd5e1{% endif %}; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+                    Question {{ item.number }} ({{ item.question_type }})
+                </span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 0.8rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                        ⏱️ Time Spent: {{ item.time_spent }}s
+                    </span>
+                    <span style="font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: {% if item.outcome == 'correct' %}#dcfce7{% elif item.outcome == 'wrong' %}#fee2e2{% else %}#f1f5f9{% endif %}; color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                        Marks: {{ item.earned_marks }} / {{ item.marks }}
+                    </span>
+                </div>
+            </div>
+
+            <p style="font-size: 1rem; color: #1e293b; font-weight: 600; margin: 0 0 14px;">
+                {{ item.question_text }}
+            </p>
+
+            {% if item.question_type == 'MCQ' %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem;">
+                    <div style="color: {% if item.correct_ans == 'A' %}#166534{% elif item.student_ans == 'A' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'A' or item.student_ans == 'A' %}700{% else %}400{% endif %};">
+                        <strong>A:</strong> {{ item.option_a }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'B' %}#166534{% elif item.student_ans == 'B' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'B' or item.student_ans == 'B' %}700{% else %}400{% endif %};">
+                        <strong>B:</strong> {{ item.option_b }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'C' %}#166534{% elif item.student_ans == 'C' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'C' or item.student_ans == 'C' %}700{% else %}400{% endif %};">
+                        <strong>C:</strong> {{ item.option_c }}
+                    </div>
+                    <div style="color: {% if item.correct_ans == 'D' %}#166534{% elif item.student_ans == 'D' %}#991b1b{% else %}#334155{% endif %}; font-weight: {% if item.correct_ans == 'D' or item.student_ans == 'D' %}700{% else %}400{% endif %};">
+                        <strong>D:</strong> {{ item.option_d }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem;">
+                <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; flex: 1;">
+                    <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; display: block;">STUDENT RESPONSE:</span>
+                    <strong style="color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                        {{ item.student_ans }}
+                    </strong>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 6px; flex: 1;">
+                    <span style="color: #166534; font-size: 0.8rem; font-weight: 600; display: block;">CORRECT SOLUTION:</span>
+                    <strong style="color: #166534;">
+                        {{ item.correct_ans }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- ── Anti-Cheat Proctoring Report ──────────────────────────────── -->
+    <div style="margin-top: 32px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <h2 style="font-size: 1.2rem; color: #0f172a; font-weight: 700; margin: 0;">
+                🔒 Proctoring Integrity Report
+            </h2>
+            {% if violation_count > 0 %}
+                <span style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 9999px;">
+                    ⚠ {{ violation_count }} Violation{{ violation_count|pluralize }} Recorded
+                </span>
+            {% else %}
+                <span style="background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 9999px;">
+                    ✅ No Violations — Clean Attempt
+                </span>
+            {% endif %}
+        </div>
+
+        {% if proctor_violations %}
+            <div style="background: #fff; border-radius: 12px; border: 1px solid #fca5a5; overflow: hidden; box-shadow: 0 1px 4px rgba(239,68,68,0.07);">
+                <div style="background: #fef2f2; padding: 14px 20px; border-bottom: 1px solid #fecaca; font-size: 0.85rem; color: #7f1d1d; font-weight: 600;">
+                    The following suspicious activities were detected and logged by the Proctoring Engine during this student's exam attempt.
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; color: #475569; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.05em;">
+                                <th style="padding: 12px 16px; text-align: left;">#</th>
+                                <th style="padding: 12px 16px; text-align: left;">Violation Type</th>
+                                <th style="padding: 12px 16px; text-align: left;">Detail</th>
+                                <th style="padding: 12px 16px; text-align: left;">Question At Time</th>
+                                <th style="padding: 12px 16px; text-align: left;">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in proctor_violations %}
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 12px 16px; font-weight: 700; color: #991b1b;">{{ v.violation_no }}</td>
+                                    <td style="padding: 12px 16px;">
+                                        {% if v.type == "TAB_SWITCH" %}
+                                            <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">TAB SWITCH</span>
+                                        {% elif v.type == "WINDOW_BLUR" %}
+                                            <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">WINDOW BLUR</span>
+                                        {% elif v.type == "COPY_PASTE" %}
+                                            <span style="background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">COPY / PASTE</span>
+                                        {% elif v.type == "RIGHT_CLICK" %}
+                                            <span style="background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">RIGHT CLICK</span>
+                                        {% else %}
+                                            <span style="background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">{{ v.type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 16px; color: #334155;">{{ v.detail }}</td>
+                                    <td style="padding: 12px 16px; color: #475569; font-weight: 600;">Q{{ v.question_index }}</td>
+                                    <td style="padding: 12px 16px; color: #64748b; font-size: 0.82rem;">{{ v.timestamp }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 24px; text-align: center; color: #166534;">
+                <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+                <p style="font-weight: 600; margin: 0;">No suspicious activities were detected during this exam attempt.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

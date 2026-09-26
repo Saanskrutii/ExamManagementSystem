@@ -1,241 +1,271 @@
+{% extends "base_teacher.html" %}
 {% load static %}
+
+{% block page_title %}Subjects{% endblock %}
+{% block navbar_title %}Subjects{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/subjects.css' %}">
+<style>
+    /* Modal styles for Add Subject */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+    }
+    .modal-backdrop.active {
+        display: flex;
+    }
+    .modal-card {
+        background: #ffffff;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        padding: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #64748b;
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px #eff6ff;
+    }
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<!--
-    NOTE: This is a CONTENT-ONLY fragment.
-    It is designed to be rendered inside the existing dashboard layout's
-    <main class="page-content"> ... </main> region (sidebar + navbar
-    from teacher_dashboard.html / base.html are not repeated here).
--->
 
-<div class="page-heading page-heading-row">
+<div class="page-heading page-heading-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
     <div>
-        <h2 class="page-title">Subjects</h2>
-        <p class="page-subtitle">Manage all the subjects assigned to you.</p>
+        <h2 class="page-title">Subjects & Co-Teaching</h2>
+        <p class="page-subtitle">Manage your subjects or collaborate with fellow teachers via Invite Codes.</p>
     </div>
 
-    <button type="button" class="btn-primary btn-add-subject">
-        <span class="btn-icon" aria-hidden="true">+</span>
-        Add Subject
-    </button>
+    <div style="display: flex; gap: 12px;">
+        <button type="button" class="btn-primary" id="openJoinSubjectModal" style="background: #0284c7; border-color: #0284c7;">
+            <span class="btn-icon" aria-hidden="true">🔑</span> Join via Invite Code
+        </button>
+        <button type="button" class="btn-primary btn-add-subject" id="openAddSubjectModal">
+            <span class="btn-icon" aria-hidden="true">+</span> Add Subject
+        </button>
+    </div>
 </div>
 
-<!-- ================= SUBJECTS GRID ================= -->
-<section class="subjects-grid" aria-label="Subjects list">
+{# ── System Messages (e.g. Subject Created / Joined / Deleted) ── #}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; background-color: #f0fdf4; border: 1px solid #86efac; color: #166534;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Database Management System</h3>
-                <span class="subject-code">CSE301</span>
-            </div>
-            <span class="semester-badge">Sem 5</span>
+{# ── Dynamic Subjects List or Empty State ── #}
+{% if subjects %}
+    <section class="subjects-grid" aria-label="Subjects list">
+        {% for subject in subjects %}
+            <article class="subject-card" style="border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; background: #ffffff;">
+                <div class="subject-card-top" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <div class="subject-icon" style="font-size: 1.8rem;" aria-hidden="true">📘</div>
+                        <div class="subject-heading">
+                            <h3 class="subject-name" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #0f172a;">{{ subject.name }}</h3>
+                            <span class="subject-code" style="color: #2563eb; font-weight: 700; font-size: 0.85rem;">{{ subject.code }}</span>
+                        </div>
+                    </div>
+
+                    {% if subject.is_owner %}
+                        <span style="background: #eff6ff; color: #1d4ed8; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">👑 Owner</span>
+                    {% else %}
+                        <span style="background: #f0fdf4; color: #166534; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">👥 Co-Teacher</span>
+                    {% endif %}
+                </div>
+
+                {% if subject.description %}
+                    <p style="font-size: 0.875rem; color: #64748b; margin: 12px 0 0 0; line-height: 1.4;">
+                        {{ subject.description|truncatewords:20 }}
+                    </p>
+                {% endif %}
+
+                <!-- Collaboration Invite Code Box -->
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 10px 14px; border-radius: 8px; margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Invite Code:</div>
+                        <code style="font-size: 0.95rem; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">{{ subject.invite_code }}</code>
+                    </div>
+                    <button type="button" onclick="navigator.clipboard.writeText('{{ subject.invite_code }}'); alert('Invite code copied: {{ subject.invite_code }}');" style="background: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; color: #334155;">
+                        📋 Copy
+                    </button>
+                </div>
+
+                <div class="subject-stats" style="margin-top: 14px; display: flex; gap: 16px; font-size: 0.8rem; color: #64748b;">
+                    <div>📅 {{ subject.created_at|date:"M d, Y" }}</div>
+                    {% if subject.co_teacher_count > 0 %}
+                        <div>👥 {{ subject.co_teacher_count }} Co-Teacher{{ subject.co_teacher_count|pluralize }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="subject-actions" style="margin-top: 16px; display: flex; gap: 8px;">
+                    <a href="{% url 'edit_subject' subject.id %}" class="btn-outline" style="flex: 1; text-align: center; text-decoration: none; padding: 8px; font-weight: 600;">
+                        <span aria-hidden="true">✏</span> Edit
+                    </a>
+                    {% if subject.is_owner %}
+                    <form action="{% url 'delete_subject' subject.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete this subject?');" style="flex: 1;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-outline btn-outline-danger" style="width: 100%; padding: 8px; font-weight: 600;">
+                            <span aria-hidden="true">🗑</span> Delete
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <section class="empty-state-container" aria-label="No subjects found">
+        <div class="empty-state-icon" aria-hidden="true">📚</div>
+        <h3 class="empty-state-title">No Subjects Found</h3>
+        <p class="empty-state-text">Click "Add Subject" to create your first subject in MongoDB.</p>
+    </section>
+{% endif %}
+
+{# ── Add Subject Modal ── #}
+<div class="modal-backdrop" id="addSubjectModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add New Subject</h3>
+            <button type="button" class="modal-close" id="closeAddSubjectModal">&times;</button>
         </div>
 
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">120</span>
+        <form action="{% url 'subjects' %}" method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_name" class="form-label">Subject Name *</label>
+                <input type="text" name="name" id="id_name" class="form-input" placeholder="e.g., Database Management System" required>
             </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">8</span>
+
+            <div class="form-group">
+                <label for="id_code" class="form-label">Subject Code *</label>
+                <input type="text" name="code" id="id_code" class="form-input" placeholder="e.g., DBMS-101" required>
             </div>
+
+            <div class="form-group">
+                <label for="id_description" class="form-label">Description (Optional)</label>
+                <textarea name="description" id="id_description" class="form-input" rows="3" placeholder="Enter subject details or syllabus outline..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" id="cancelAddSubjectModal">Cancel</button>
+                <button type="submit" class="btn-primary">Save Subject</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ── Join Co-Teaching Subject Modal ── #}
+<div class="modal-backdrop" id="joinSubjectModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Join Co-Teaching Subject</h3>
+            <button type="button" class="modal-close" id="closeJoinSubjectModal">&times;</button>
         </div>
 
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true"></span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true"></span> Delete Subject
-            </button>
-        </div>
-    </article>
+        <form action="{% url 'join_subject' %}" method="post">
+            {% csrf_token %}
 
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Operating Systems</h3>
-                <span class="subject-code">CSE302</span>
+            <div class="form-group">
+                <label for="id_invite_code" class="form-label">Subject Invite Code *</label>
+                <input type="text" name="invite_code" id="id_invite_code" class="form-input" placeholder="e.g., SUB-8A2F9B" required style="font-weight: 700; font-family: monospace; font-size: 1.1rem; text-transform: uppercase;">
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 6px;">Ask the subject creator teacher for their unique 6-character Invite Code.</p>
             </div>
-            <span class="semester-badge">Sem 5</span>
-        </div>
 
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">85</span>
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" id="cancelJoinSubjectModal">Cancel</button>
+                <button type="submit" class="btn-primary" style="background: #0284c7; border-color: #0284c7;">Join Co-Teaching</button>
             </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">4</span>
-            </div>
-        </div>
+        </form>
+    </div>
+</div>
 
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true"></span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true"></span> Delete Subject
-            </button>
-        </div>
-    </article>
+{% endblock %}
 
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Computer Networks</h3>
-                <span class="subject-code">CSE303</span>
-            </div>
-            <span class="semester-badge">Sem 5</span>
-        </div>
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Add Subject Modal
+        var addModal = document.getElementById("addSubjectModal");
+        var openAddBtn = document.getElementById("openAddSubjectModal");
+        var closeAddBtn = document.getElementById("closeAddSubjectModal");
+        var cancelAddBtn = document.getElementById("cancelAddSubjectModal");
 
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">92</span>
-            </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">6</span>
-            </div>
-        </div>
+        if (openAddBtn) openAddBtn.addEventListener("click", function() { addModal.classList.add("active"); });
+        if (closeAddBtn) closeAddBtn.addEventListener("click", function() { addModal.classList.remove("active"); });
+        if (cancelAddBtn) cancelAddBtn.addEventListener("click", function() { addModal.classList.remove("active"); });
 
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true"></span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true"></span> Delete Subject
-            </button>
-        </div>
-    </article>
+        // Join Subject Modal
+        var joinModal = document.getElementById("joinSubjectModal");
+        var openJoinBtn = document.getElementById("openJoinSubjectModal");
+        var closeJoinBtn = document.getElementById("closeJoinSubjectModal");
+        var cancelJoinBtn = document.getElementById("cancelJoinSubjectModal");
 
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Machine Learning</h3>
-                <span class="subject-code">CSE401</span>
-            </div>
-            <span class="semester-badge">Sem 6</span>
-        </div>
+        if (openJoinBtn) openJoinBtn.addEventListener("click", function() { joinModal.classList.add("active"); });
+        if (closeJoinBtn) closeJoinBtn.addEventListener("click", function() { joinModal.classList.remove("active"); });
+        if (cancelJoinBtn) cancelJoinBtn.addEventListener("click", function() { joinModal.classList.remove("active"); });
 
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">60</span>
-            </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">3</span>
-            </div>
-        </div>
-
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true"></span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true"></span> Delete Subject
-            </button>
-        </div>
-    </article>
-
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Software Engineering</h3>
-                <span class="subject-code">CSE304</span>
-            </div>
-            <span class="semester-badge">Sem 5</span>
-        </div>
-
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">74</span>
-            </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">5</span>
-            </div>
-        </div>
-
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true">✏</span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true"></span> Delete Subject
-            </button>
-        </div>
-    </article>
-
-    <article class="subject-card">
-        <div class="subject-card-top">
-            <div class="subject-icon" aria-hidden="true"></div>
-            <div class="subject-heading">
-                <h3 class="subject-name">Artificial Intelligence</h3>
-                <span class="subject-code">CSE402</span>
-            </div>
-            <span class="semester-badge">Sem 6</span>
-        </div>
-
-        <div class="subject-stats">
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Questions</span>
-                <span class="subject-stat-value">110</span>
-            </div>
-            <div class="subject-stat-box">
-                <span class="subject-stat-icon" aria-hidden="true"></span>
-                <span class="subject-stat-label">Tests</span>
-                <span class="subject-stat-value">7</span>
-            </div>
-        </div>
-
-        <div class="subject-actions">
-            <button type="button" class="btn-outline">
-                <span aria-hidden="true">✏</span> Edit Subject
-            </button>
-            <button type="button" class="btn-outline btn-outline-danger">
-                <span aria-hidden="true">🗑</span> Delete Subject
-            </button>
-        </div>
-    </article>
-
-</section>
-
-<!--
-    ================= EMPTY STATE =================
-    Shown instead of .subjects-grid when no subjects exist.
-    Kept as plain HTML here for reference / future conditional use,
-    e.g. {% if subjects %} ... {% else %} (this block) {% endif %}
--->
-<section class="empty-state-container" aria-label="No subjects found">
-    <div class="empty-state-icon" aria-hidden="true"></div>
-    <h3 class="empty-state-title">No Subjects Found</h3>
-    <p class="empty-state-text">Click "Add Subject" to create your first subject.</p>
-</section>
+        window.addEventListener("click", function(e) {
+            if (e.target === addModal) addModal.classList.remove("active");
+            if (e.target === joinModal) joinModal.classList.remove("active");
+        });
+    });
+</script>
 {% endblock %}
