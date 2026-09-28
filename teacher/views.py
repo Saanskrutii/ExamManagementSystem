@@ -1124,7 +1124,8 @@ def student_submissions(request):
     teacher_exam_ids = [e["_id"] for e in teacher_exams]
 
     submissions = []
-    attempts = attempts_collection.find({"exam_id": {"$in": teacher_exam_ids}, "is_submitted": True}).sort("submitted_at", -1)
+    # Fetch all attempts (including incomplete/abandoned ones)
+    attempts = attempts_collection.find({"exam_id": {"$in": teacher_exam_ids}}).sort("started_at", -1)
 
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -1134,21 +1135,34 @@ def student_submissions(request):
         student_user = User.objects.filter(id=att.get("student_id")).first()
         exam_doc = exams_collection.find_one({"_id": att.get("exam_id")})
         res_doc = results_collection.find_one({"attempt_id": att["_id"]})
+        
+        is_submitted = att.get("is_submitted", False)
 
         if student_user and exam_doc:
-                score = res_doc.get("score", 0) if res_doc else 0
-                total_marks = res_doc.get("total_marks", 0) if res_doc else 0
-                percentage = round(score / total_marks * 100, 1) if total_marks > 0 else 0
+                if is_submitted:
+                    score = res_doc.get("score", 0) if res_doc else 0
+                    total_marks = res_doc.get("total_marks", 0) if res_doc else 0
+                    percentage = round(score / total_marks * 100, 1) if total_marks > 0 else 0
+                    status = res_doc.get("status", "PENDING") if res_doc else "PENDING"
+                    submitted_at = att.get("submitted_at")
+                else:
+                    score = 0
+                    total_marks = 0
+                    percentage = 0
+                    status = "ABANDONED"
+                    submitted_at = att.get("started_at") # show started time
+
                 submissions.append({
                     "id": str(att["_id"]),
                     "student_name": f"{student_user.first_name} {student_user.last_name}".strip() or student_user.username,
                     "student_username": student_user.username,
                     "exam_title": exam_doc.get("title", ""),
-                    "submitted_at": att.get("submitted_at"),
+                    "submitted_at": submitted_at,
                     "score": score,
                     "total_marks": total_marks,
                     "percentage": percentage,
-                    "status": res_doc.get("status", "PENDING") if res_doc else "PENDING",
+                    "status": status,
+                    "is_submitted": is_submitted,
                 })
 
     return render(request, "student_submissions.html", {"submissions": submissions})
