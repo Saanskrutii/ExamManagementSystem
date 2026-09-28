@@ -498,36 +498,39 @@
             document.getElementById("proctorOverlay").classList.remove("show");
         }
 
-        // ── Deduplication: prevents double-counting within 1.5 seconds
-        // When a tab switch happens, both visibilitychange fires.
-        // Using a timestamp check so only 1 violation logs per incident.
+        // ── Deduplication: prevents double-counting within 1.5 seconds ──────
+        // Both visibilitychange AND blur can fire on tab switch.
+        // Using timestamp so whichever fires first wins — only 1 violation per incident.
         let lastViolationTime = 0;
 
         function recordViolationThrottled(type, detail) {
             var now = Date.now();
-            if (now - lastViolationTime < 1500) return; // ignore if < 1.5s since last violation
+            if (now - lastViolationTime < 1500) return; // skip if < 1.5s since last violation
             lastViolationTime = now;
             recordViolation(type, detail);
         }
 
-        // 1. Page Visibility API — detects tab switching / minimising browser
-        //    This is the PRIMARY listener. One tab switch = exactly 1 violation.
+        // 1. visibilitychange — fires when tab is hidden (tab switch or minimise)
         document.addEventListener("visibilitychange", function() {
             if (document.hidden) {
                 recordViolationThrottled("TAB_SWITCH", "Student navigated away from exam tab.");
             }
         });
 
-        // NOTE: window blur listener intentionally removed.
-        // It was double-counting with visibilitychange on every tab switch.
+        // 2. blur — backup for cases where visibilitychange doesn't fire
+        //    (e.g. Alt+Tab to another app, split screen click, some Chrome versions)
+        //    Timestamp dedup ensures this + visibilitychange together = 1 violation only.
+        window.addEventListener("blur", function() {
+            recordViolationThrottled("TAB_SWITCH", "Exam window lost focus — possible external switch.");
+        });
 
-        // 2. Disable right-click
+        // 3. Disable right-click
         document.addEventListener("contextmenu", function(e) {
             e.preventDefault();
             recordViolation("RIGHT_CLICK", "Right-click menu access attempted.");
         });
 
-        // 3. Disable copy / paste / cut
+        // 4. Disable copy / paste / cut
         ["copy", "cut", "paste"].forEach(function(evt) {
             document.addEventListener(evt, function(e) {
                 e.preventDefault();
