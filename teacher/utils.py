@@ -1,4 +1,8 @@
 import re
+import os
+import json
+import tempfile
+from django.conf import settings
 from pypdf import PdfReader
 
 
@@ -41,17 +45,88 @@ def reassemble_pdf_tokens(raw_text):
     return reconstructed_lines
 
 
+def extract_syllabus_with_gemini(pdf_file):
+    """
+    Fallback for scanned PDFs using Gemini's native document processing capabilities.
+    """
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        return []
+
+    api_key = getattr(settings, "GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+    if not api_key:
+        return []
+
+    client = genai.Client(api_key=api_key)
+    
+    # Save the in-memory/uploaded file to disk temporarily for Gemini SDK
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        pdf_file.seek(0)
+        tmp.write(pdf_file.read())
+        tmp_path = tmp.name
+
+    try:
+        gemini_file = client.files.upload(file=tmp_path, mime_type="application/pdf")
+        
+        prompt = """
+        Analyze this syllabus document and extract all the educational units/chapters/modules.
+        Return ONLY a JSON array. Each object in the array MUST have exactly these keys:
+        - "unit_number": (integer)
+        - "title": (string) title of the unit
+        - "description": (string) bullet points or contents of the unit
+        """
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[gemini_file, prompt],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
+        )
+        
+        # Cleanup from Gemini storage
+        client.files.delete(name=gemini_file.name)
+        
+        data = json.loads(response.text)
+        
+        # Validate data format
+        result = []
+        for i, item in enumerate(data):
+            result.append({
+                "unit_number": int(item.get("unit_number", i + 1)),
+                "title": str(item.get("title", f"Unit {i+1}")),
+                "description": str(item.get("description", ""))
+            })
+        return result
+    except Exception as e:
+        print(f"[AI Service Warning] Gemini PDF extraction failed: {e}")
+        return []
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
 def extract_syllabus_from_pdf(pdf_file):
     """
     High-Precision Syllabus Parser.
-    Re-assembles PDF text tokens and extracts Units, Chapters, and Sections cleanly.
+    First tries PyPDF2 text extraction. If it's a scanned PDF, falls back to Gemini AI OCR.
     """
+    pdf_file.seek(0)
     reader = PdfReader(pdf_file)
     full_text = ""
     for page in reader.pages:
         text = page.extract_text()
         if text:
             full_text += text + "\n"
+
+    # If it's a scanned PDF without an OCR text layer, pypdf returns almost nothing 
+    # or just watermarks like "Scanned by PDF Scanner".
+    if len(full_text.strip()) < 300 or "Scanned by PDF Scanner" in full_text:
+        ai_extracted = extract_syllabus_with_gemini(pdf_file)
+        if ai_extracted:
+            return ai_extracted
 
     # Re-assemble single-word newlines into clean lines
     lines = reassemble_pdf_tokens(full_text)
