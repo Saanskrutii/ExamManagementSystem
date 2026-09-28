@@ -211,10 +211,10 @@ Return ONLY valid JSON matching this structure:
         client = genai.Client(api_key=self.api_key)
 
         wrong_text = "\n".join(
-            [f"- {q.get('question_text', '')}" for q in wrong_questions[:15]]
+            [f"- {q.get('question_text', '')} (Student Answered: '{q.get('student_answer', '')}')" for q in wrong_questions]
         ) or "None"
         correct_text = "\n".join(
-            [f"- {q.get('question_text', '')}" for q in correct_questions[:10]]
+            [f"- {q.get('question_text', '')} (Student Answered: '{q.get('student_answer', '')}')" for q in correct_questions]
         ) or "None"
 
         prompt = f"""
