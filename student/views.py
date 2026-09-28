@@ -431,10 +431,12 @@ def take_exam(request, exam_id):
     # Randomize questions for student cheating prevention
     random.shuffle(questions)
 
-    # Calculate remaining time (server enforced)
-    exam["duration_minutes"] = get_dynamic_exam_duration(exam)
+    # ── Timer: strictly duration_minutes (NOT deadline/end_time) ──────────
+    # duration_minutes = how long the student gets once they START the exam
+    # end_time = deadline (when the exam ACCESS window closes) — different!
+    duration_mins = get_dynamic_exam_duration(exam)
     time_elapsed = (datetime.utcnow() - attempt["started_at"]).total_seconds()
-    allowed_secs = int(exam.get("duration_minutes", 60)) * 60
+    allowed_secs = int(duration_mins) * 60
     time_remaining_secs = max(0, int(allowed_secs - time_elapsed))
 
     if time_remaining_secs <= 0:

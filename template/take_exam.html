@@ -498,29 +498,39 @@
             document.getElementById("proctorOverlay").classList.remove("show");
         }
 
+        // ── Cooldown flag: prevents double-counting when tab switch fires both
+        // visibilitychange + blur together in the same instant.
+        let violationCooldown = false;
+
+        function recordViolationThrottled(type, detail) {
+            if (violationCooldown) return;   // Already logged this incident
+            violationCooldown = true;
+            recordViolation(type, detail);
+            setTimeout(function() { violationCooldown = false; }, 2000); // 2-sec cooldown
+        }
+
         // 1. Page Visibility API — detects tab switching / minimising browser
+        //    This is the PRIMARY listener. One tab switch = exactly 1 violation.
         document.addEventListener("visibilitychange", function() {
             if (document.hidden) {
-                recordViolation("TAB_SWITCH", "Student navigated away from exam tab.");
+                recordViolationThrottled("TAB_SWITCH", "Student navigated away from exam tab.");
             }
         });
 
-        // 2. Window blur — detects switching to another application
-        window.addEventListener("blur", function() {
-            recordViolation("WINDOW_BLUR", "Exam window lost focus — possible external application switch.");
-        });
+        // NOTE: window blur listener intentionally removed.
+        // It was double-counting with visibilitychange on every tab switch.
 
-        // 3. Disable right-click
+        // 2. Disable right-click
         document.addEventListener("contextmenu", function(e) {
             e.preventDefault();
-            recordViolation("RIGHT_CLICK", "Right-click menu access attempted.");
+            recordViolationThrottled("RIGHT_CLICK", "Right-click menu access attempted.");
         });
 
-        // 4. Disable copy / paste / cut
+        // 3. Disable copy / paste / cut
         ["copy", "cut", "paste"].forEach(function(evt) {
             document.addEventListener(evt, function(e) {
                 e.preventDefault();
-                recordViolation("COPY_PASTE", "Clipboard action '" + evt + "' was attempted and blocked.");
+                recordViolationThrottled("COPY_PASTE", "Clipboard action '" + evt + "' was attempted and blocked.");
             });
         });
         // ── End Anti-Cheat Engine ─────────────────────────────────────────
