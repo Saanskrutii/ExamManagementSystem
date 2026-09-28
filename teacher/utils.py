@@ -52,11 +52,13 @@ def extract_syllabus_with_gemini(pdf_file):
     try:
         from google import genai
         from google.genai import types
-    except ImportError:
+    except ImportError as e:
+        print(f"[AI Service] google-genai not installed: {e}")
         return []
 
     api_key = getattr(settings, "GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
     if not api_key:
+        print("[AI Service] GEMINI_API_KEY not set.")
         return []
 
     client = genai.Client(api_key=api_key)
@@ -69,7 +71,7 @@ def extract_syllabus_with_gemini(pdf_file):
 
     try:
         import time
-        gemini_file = client.files.upload(file=tmp_path, mime_type="application/pdf")
+        gemini_file = client.files.upload(file=tmp_path)
         
         # Wait for file to be ready (required for PDFs)
         gemini_file = client.files.get(name=gemini_file.name)
@@ -125,13 +127,8 @@ def extract_syllabus_with_gemini(pdf_file):
                 })
         return result
     except Exception as e:
-        error_msg = f"Gemini API Error: {str(e)}"
-        print(f"[AI Service Warning] {error_msg}")
-        return [{
-            "unit_number": 999,
-            "title": "DEBUG: Gemini OCR Failed",
-            "description": error_msg
-        }]
+        print(f"[AI Service Warning] Gemini PDF extraction failed: {str(e)}")
+        return []
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -152,10 +149,12 @@ def extract_syllabus_from_pdf(pdf_file):
 
     # If it's a scanned PDF without an OCR text layer, pypdf returns almost nothing 
     # or just watermarks like "Scanned by PDF Scanner".
-    if len(full_text.strip()) < 300 or "Scanned by PDF Scanner" in full_text:
+    if len(full_text.strip()) < 300 or "scanned by pdf scanner" in full_text.lower():
         ai_extracted = extract_syllabus_with_gemini(pdf_file)
         if ai_extracted:
             return ai_extracted
+        else:
+            return [{"unit_number": 999, "title": "DEBUG: Empty AI Result", "description": "Gemini ran but returned empty array."}]
 
     # Re-assemble single-word newlines into clean lines
     lines = reassemble_pdf_tokens(full_text)
