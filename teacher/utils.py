@@ -125,8 +125,13 @@ def extract_syllabus_with_gemini(pdf_file):
                 })
         return result
     except Exception as e:
-        print(f"[AI Service Warning] Gemini PDF extraction failed: {str(e)}")
-        return []
+        error_msg = f"Gemini API Error: {str(e)}"
+        print(f"[AI Service Warning] {error_msg}")
+        return [{
+            "unit_number": 999,
+            "title": "DEBUG: Gemini OCR Failed",
+            "description": error_msg
+        }]
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
