@@ -95,7 +95,7 @@ def dashboard(request):
             upcoming_exams.append(e)
 
     # ── Recent Results (last 5) ──────────────────────────────────
-    exam_ids = [e["_id"] for e in exams_collection.find(owner_query, {"_id": 1})]
+    exam_ids = [e["_id"] for e in exams_collection.find({"subject_id": {"$in": user_sub_ids}}, {"_id": 1})]
     recent_results_cursor = results_collection.find(
         {"exam_id": {"$in": exam_ids}}
     ).sort("evaluated_at", -1).limit(5)
