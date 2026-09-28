@@ -59,10 +59,14 @@ def extract_syllabus_from_pdf(pdf_file):
     units = []
     current_unit = None
     unit_counter = 1
+    fallback_items = []
 
     chapter_re = re.compile(r"^Chapter\s*(\d+)\s*(.*)$", re.IGNORECASE)
     section_re = re.compile(r"^Section\s*(\d+)\s*(.*)$", re.IGNORECASE)
     essential_re = re.compile(r"^Essential\s+Learnings?[\:\-\s]*(.*)$", re.IGNORECASE)
+    
+    # Matches Unit, Module, Chapter, or Topic at the start of a line
+    unit_header_re = re.compile(r"^(unit|module|chapter|topic)\s*(.*)", re.IGNORECASE)
 
     for line_str in lines:
         line_lower = line_str.lower()
@@ -71,13 +75,16 @@ def extract_syllabus_from_pdf(pdf_file):
         if line_lower.startswith("general science:") or line_lower.startswith("instructor:") or line_lower == "• second semester":
             continue
 
-        # Check for Unit header e.g. "Unit – Matter (State Standard 12.2.1)"
-        if line_lower.startswith("unit"):
-            title = re.sub(r"^unit\s*[\-\–\:\s]*", "", line_str, flags=re.IGNORECASE).strip()
+        # Check for Unit/Module/Topic header
+        unit_match = unit_header_re.match(line_str)
+        if unit_match:
+            prefix = unit_match.group(1).capitalize()
+            raw_title = unit_match.group(2)
+            title = re.sub(r"^[\-\–\:\s]*", "", raw_title).strip()
             title = re.sub(r"\(State Standard.*?\)", "", title, flags=re.IGNORECASE).strip(" -–:")
 
             if not title or len(title) < 2:
-                title = f"Unit {unit_counter}"
+                title = f"{prefix} {unit_counter}"
 
             if current_unit:
                 units.append(current_unit)
@@ -96,14 +103,13 @@ def extract_syllabus_from_pdf(pdf_file):
                 current_unit["items"].append(f"📌 Essential Learnings: {e_match}")
                 continue
 
+            # We don't need chapter_re match if we already treat "Chapter" as a unit boundary,
+            # but we keep it for subsections if it appears inside a unit.
             c_match = chapter_re.match(line_str)
             s_match = section_re.match(line_str)
 
-            if c_match:
-                c_num = c_match.group(1)
-                c_title = c_match.group(2).strip()
-                item_text = f"\n• Chapter {c_num}: {c_title}" if c_title else f"\n• Chapter {c_num}"
-                current_unit["items"].append(item_text)
+            if c_match and "chapter" not in line_lower: # avoid double processing if chapter was already a unit
+                pass 
             elif s_match:
                 s_num = s_match.group(1)
                 s_title = s_match.group(2).strip()
@@ -112,9 +118,21 @@ def extract_syllabus_from_pdf(pdf_file):
             else:
                 if len(line_str) > 1:
                     current_unit["items"].append(f"  {line_str}")
+        else:
+            # Collect text that appears before any Unit header (fallback)
+            if len(line_str) > 1:
+                fallback_items.append(f"  {line_str}")
 
     if current_unit:
         units.append(current_unit)
+        
+    # Fallback: if no units/modules were found at all, wrap everything in Unit 1
+    if not units and fallback_items:
+        units.append({
+            "unit_number": 1,
+            "title": "General Syllabus Content",
+            "items": fallback_items
+        })
 
     # Format output
     result = []
