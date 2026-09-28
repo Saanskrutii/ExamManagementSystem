@@ -1592,7 +1592,7 @@ def export_results_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        "Student Name", "Username", "Exam Title",
+        "Student Name", "Username", "Roll Number", "PEN", "Exam Title",
         "Score", "Total Marks", "Percentage (%)", "Status", "Evaluated At"
     ])
 
@@ -1606,11 +1606,15 @@ def export_results_csv(request):
             f"{student.first_name} {student.last_name}".strip() or student.username
         ) if student else "Unknown"
         username = student.username if student else "—"
+        roll_number = getattr(student, 'roll_number', '—') or '—'
+        pen = getattr(student, 'pen', '—') or '—'
         exam_title = exam_map.get(str(r.get("exam_id")), "—")
 
         writer.writerow([
             student_name,
             username,
+            roll_number,
+            pen,
             exam_title,
             r.get("score", 0),
             r.get("total_marks", 0),

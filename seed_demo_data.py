@@ -35,7 +35,7 @@ def seed_data():
     # 2. Ensure Users Exist (Admin, Teacher, Students)
     print("👤 Setting up Demo Users...")
 
-    def create_or_update_user(username, email, role, password, first_name, last_name):
+    def create_or_update_user(username, email, role, password, first_name, last_name, roll_number="", pen=""):
         user = User.objects.filter(username=username).first()
         if not user:
             user = User.objects.create_user(
@@ -45,19 +45,23 @@ def seed_data():
                 role=role,
                 first_name=first_name,
                 last_name=last_name,
+                roll_number=roll_number,
+                pen=pen,
             )
         else:
             user.set_password(password)
             user.role = role
             user.first_name = first_name
             user.last_name = last_name
+            user.roll_number = roll_number
+            user.pen = pen
             user.save()
         return user
 
     admin_user = create_or_update_user("admin", "admin@exam.com", "ADMIN", "admin123", "System", "Admin")
     teacher_user = create_or_update_user("teacher", "teacher@exam.com", "TEACHER", "teacher123", "Sanskruti", "Gosavi")
-    student1_user = create_or_update_user("student", "student@exam.com", "STUDENT", "student123", "Rahul", "Sharma")
-    student2_user = create_or_update_user("student2", "student2@exam.com", "STUDENT", "student123", "Priya", "Patel")
+    student1_user = create_or_update_user("student", "student@exam.com", "STUDENT", "student123", "Rahul", "Sharma", "CS-2026-01", "PEN-889920")
+    student2_user = create_or_update_user("student2", "student2@exam.com", "STUDENT", "student123", "Priya", "Patel", "CS-2026-02", "PEN-889921")
 
     teacher_id = teacher_user.id
     student1_id = student1_user.id

@@ -25,6 +25,19 @@ class CustomUser(AbstractUser):
         null=True,
     )
 
+    pen = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Permanent Education Number (PEN) / PRN",
+    )
+
+    roll_number = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+
     profile_picture = models.ImageField(
         upload_to="profile_pics/",
         blank=True,
