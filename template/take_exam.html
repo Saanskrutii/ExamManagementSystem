@@ -498,15 +498,16 @@
             document.getElementById("proctorOverlay").classList.remove("show");
         }
 
-        // ── Cooldown flag: prevents double-counting when tab switch fires both
-        // visibilitychange + blur together in the same instant.
-        let violationCooldown = false;
+        // ── Deduplication: prevents double-counting within 1.5 seconds
+        // When a tab switch happens, both visibilitychange fires.
+        // Using a timestamp check so only 1 violation logs per incident.
+        let lastViolationTime = 0;
 
         function recordViolationThrottled(type, detail) {
-            if (violationCooldown) return;   // Already logged this incident
-            violationCooldown = true;
+            var now = Date.now();
+            if (now - lastViolationTime < 1500) return; // ignore if < 1.5s since last violation
+            lastViolationTime = now;
             recordViolation(type, detail);
-            setTimeout(function() { violationCooldown = false; }, 2000); // 2-sec cooldown
         }
 
         // 1. Page Visibility API — detects tab switching / minimising browser
@@ -523,14 +524,14 @@
         // 2. Disable right-click
         document.addEventListener("contextmenu", function(e) {
             e.preventDefault();
-            recordViolationThrottled("RIGHT_CLICK", "Right-click menu access attempted.");
+            recordViolation("RIGHT_CLICK", "Right-click menu access attempted.");
         });
 
         // 3. Disable copy / paste / cut
         ["copy", "cut", "paste"].forEach(function(evt) {
             document.addEventListener(evt, function(e) {
                 e.preventDefault();
-                recordViolationThrottled("COPY_PASTE", "Clipboard action '" + evt + "' was attempted and blocked.");
+                recordViolation("COPY_PASTE", "Clipboard action '" + evt + "' was attempted and blocked.");
             });
         });
         // ── End Anti-Cheat Engine ─────────────────────────────────────────

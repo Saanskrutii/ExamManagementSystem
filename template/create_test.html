@@ -233,22 +233,10 @@
         var endTimeInput = document.getElementById("id_end_time");
         var durationInput = document.getElementById("id_duration");
 
-        function updateDuration() {
-            if (startTimeInput.value && endTimeInput.value) {
-                var start = new Date(startTimeInput.value);
-                var end = new Date(endTimeInput.value);
-                var diffMs = end - start;
-                var diffMins = Math.floor(diffMs / 60000);
-                if (diffMins > 0) {
-                    durationInput.value = diffMins;
-                }
-            }
-        }
-
-        if (startTimeInput && endTimeInput && durationInput) {
-            startTimeInput.addEventListener("change", updateDuration);
-            endTimeInput.addEventListener("change", updateDuration);
-        }
+        // NOTE: Duration is intentionally NOT auto-filled from start/end time.
+        // Duration = how long the student gets ONCE they start the exam.
+        // Start/end time = the ACCESS WINDOW (deadline). These are two different things!
+        // Teachers must set duration_minutes manually.
 
         if (tabManual && tabAuto) {
             tabManual.addEventListener("click", function() {
