@@ -1140,6 +1140,7 @@ def student_submissions(request):
                 total_marks = res_doc.get("total_marks", 0) if res_doc else 0
                 percentage = round(score / total_marks * 100, 1) if total_marks > 0 else 0
                 submissions.append({
+                    "id": str(att["_id"]),
                     "student_name": f"{student_user.first_name} {student_user.last_name}".strip() or student_user.username,
                     "student_username": student_user.username,
                     "exam_title": exam_doc.get("title", ""),
