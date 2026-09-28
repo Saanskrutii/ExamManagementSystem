@@ -68,8 +68,18 @@ def extract_syllabus_with_gemini(pdf_file):
         tmp_path = tmp.name
 
     try:
+        import time
         gemini_file = client.files.upload(file=tmp_path, mime_type="application/pdf")
         
+        # Wait for file to be ready (required for PDFs)
+        gemini_file = client.files.get(name=gemini_file.name)
+        while gemini_file.state.name == "PROCESSING":
+            time.sleep(1)
+            gemini_file = client.files.get(name=gemini_file.name)
+            
+        if gemini_file.state.name == "FAILED":
+            raise Exception("Gemini failed to process the PDF.")
+
         prompt = """
         Analyze this syllabus document and extract all the educational units/chapters/modules.
         Return ONLY a JSON array. Each object in the array MUST have exactly these keys:
@@ -89,19 +99,33 @@ def extract_syllabus_with_gemini(pdf_file):
         # Cleanup from Gemini storage
         client.files.delete(name=gemini_file.name)
         
-        data = json.loads(response.text)
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        data = json.loads(raw_text.strip())
+        
+        if isinstance(data, dict):
+            # Sometimes Gemini wraps the array in an object
+            data = data.get("units", data.get("modules", data.get("chapters", [data])))
+            
+        if not isinstance(data, list):
+            data = []
         
         # Validate data format
         result = []
         for i, item in enumerate(data):
-            result.append({
-                "unit_number": int(item.get("unit_number", i + 1)),
-                "title": str(item.get("title", f"Unit {i+1}")),
-                "description": str(item.get("description", ""))
-            })
+            if isinstance(item, dict):
+                result.append({
+                    "unit_number": int(item.get("unit_number", i + 1)),
+                    "title": str(item.get("title", f"Unit {i+1}")),
+                    "description": str(item.get("description", ""))
+                })
         return result
     except Exception as e:
-        print(f"[AI Service Warning] Gemini PDF extraction failed: {e}")
+        print(f"[AI Service Warning] Gemini PDF extraction failed: {str(e)}")
         return []
     finally:
         if os.path.exists(tmp_path):
