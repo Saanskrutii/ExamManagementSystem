@@ -54,14 +54,33 @@
                 <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Skipped</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: #d97706;">{{ skipped_count }}</div>
             </div>
+            {% if descriptive_count > 0 %}
+            <div style="background: #eff6ff; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #bfdbfe;">
+                <div style="font-size: 0.75rem; color: #1d4ed8; text-transform: uppercase; font-weight: 600;">Descriptive</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1d4ed8;">{{ descriptive_count }}</div>
+            </div>
+            {% endif %}
         </div>
-    </div>    <!-- Question Response Inspection Section -->
+    </div>
     <h2 style="font-size: 1.2rem; color: #1e40af; font-weight: 700; margin-bottom: 16px;">
         Student Answer Sheet &amp; Question Time Analysis
     </h2>
 
+    {% if descriptive_count > 0 %}
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">✏️</span>
+        <div>
+            <strong style="color: #1d4ed8;">Manual Grading Required</strong>
+            <p style="margin: 2px 0 0; color: #475569; font-size: 0.85rem;">This exam has {{ descriptive_count }} descriptive question(s). Enter marks for each one below and click <strong>Save Marks</strong>.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'teacher_submission_review' attempt_id %}">
+        {% csrf_token %}
+
     {% for item in answer_review %}
-        <div style="background: #ffffff; border-radius: 12px; border: 1px solid {% if item.outcome == 'correct' %}#86efac{% elif item.outcome == 'wrong' %}#fca5a5{% else %}#cbd5e1{% endif %}; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid {% if item.outcome == 'correct' %}#86efac{% elif item.outcome == 'wrong' %}#fca5a5{% elif item.outcome == 'descriptive' %}#93c5fd{% else %}#cbd5e1{% endif %}; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span style="font-weight: 700; color: #1e3a8a; font-size: 0.95rem;">
                     Question {{ item.number }} ({{ item.question_type }})
@@ -70,7 +89,7 @@
                     <span style="font-size: 0.8rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
                         ⏱️ Time Spent: {{ item.time_spent }}s
                     </span>
-                    <span style="font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: {% if item.outcome == 'correct' %}#dcfce7{% elif item.outcome == 'wrong' %}#fee2e2{% else %}#f1f5f9{% endif %}; color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                    <span style="font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: {% if item.outcome == 'correct' %}#dcfce7{% elif item.outcome == 'wrong' %}#fee2e2{% elif item.outcome == 'descriptive' %}#eff6ff{% else %}#f1f5f9{% endif %}; color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% elif item.outcome == 'descriptive' %}#1d4ed8{% else %}#475569{% endif %};">
                         Marks: {{ item.earned_marks }} / {{ item.marks }}
                     </span>
                 </div>
@@ -100,19 +119,52 @@
             <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem;">
                 <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; flex: 1;">
                     <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; display: block;">STUDENT RESPONSE:</span>
-                    <strong style="color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %};">
+                    <strong style="color: {% if item.outcome == 'correct' %}#166534{% elif item.outcome == 'wrong' %}#991b1b{% else %}#475569{% endif %}; white-space: pre-wrap;">
                         {{ item.student_ans }}
                     </strong>
                 </div>
+                {% if item.question_type != 'DESCRIPTIVE' %}
                 <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 6px; flex: 1;">
                     <span style="color: #166534; font-size: 0.8rem; font-weight: 600; display: block;">CORRECT SOLUTION:</span>
                     <strong style="color: #166534;">
                         {{ item.correct_ans }}
                     </strong>
                 </div>
+                {% endif %}
             </div>
+
+            {% if item.question_type == 'DESCRIPTIVE' %}
+            <div style="margin-top: 16px; padding: 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;">
+                <label style="font-size: 0.82rem; font-weight: 700; color: #1d4ed8; display: block; margin-bottom: 6px;">
+                    ✏️ Award Marks (out of {{ item.marks }})
+                </label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input
+                        type="number"
+                        name="desc_marks_{{ item.q_id_str }}"
+                        id="desc_marks_{{ item.q_id_str }}"
+                        value="{{ item.earned_marks }}"
+                        min="0"
+                        max="{{ item.marks }}"
+                        step="1"
+                        style="width: 80px; padding: 6px 10px; border: 1.5px solid #93c5fd; border-radius: 6px; font-size: 0.95rem; font-weight: 600; color: #1e3a8a; outline: none;"
+                    />
+                    <span style="color: #475569; font-size: 0.85rem;">/ {{ item.marks }} marks</span>
+                </div>
+            </div>
+            {% endif %}
         </div>
     {% endfor %}
+
+    {% if descriptive_count > 0 %}
+    <div style="text-align: center; margin: 8px 0 28px;">
+        <button type="submit" style="background: #2563eb; color: #fff; border: none; padding: 12px 32px; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">
+            💾 Save Descriptive Marks & Recalculate Score
+        </button>
+    </div>
+    {% endif %}
+
+    </form>
 
     <!-- ── Anti-Cheat Proctoring Report ──────────────────────────────── -->
     <div style="margin-top: 32px;">

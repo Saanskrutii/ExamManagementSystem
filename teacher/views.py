@@ -1291,6 +1291,7 @@ def teacher_submission_review(request, attempt_id):
 def teacher_submission_review(request, attempt_id):
     """
     Detailed answer sheet inspection view for teachers.
+    Teachers can manually award marks for DESCRIPTIVE questions via POST.
     """
     try:
         att_obj_id = ObjectId(attempt_id)
@@ -1312,6 +1313,75 @@ def teacher_submission_review(request, attempt_id):
         messages.error(request, "Access denied to this student submission.")
         return redirect("student_submissions")
 
+    # ── POST: teacher is submitting descriptive marks ──────────────────────
+    if request.method == "POST" and exam_doc and res_doc:
+        awarded_marks = attempt.get("descriptive_marks", {})  # {q_id_str: marks_int}
+
+        # Read each descriptive field from the form
+        for key, val in request.POST.items():
+            if key.startswith("desc_marks_"):
+                q_id_str = key[len("desc_marks_"):]
+                try:
+                    awarded = int(val)
+                    # Clamp to max allowed marks for this question
+                    if exam_doc:
+                        try:
+                            q_obj_id = ObjectId(q_id_str)
+                        except Exception:
+                            continue
+                        q_doc_tmp = questions_collection.find_one({"_id": q_obj_id})
+                        max_marks = int(exam_doc.get("question_marks", {}).get(q_id_str,
+                                        q_doc_tmp.get("marks", 1) if q_doc_tmp else 1))
+                        awarded = max(0, min(awarded, max_marks))
+                    awarded_marks[q_id_str] = awarded
+                except (ValueError, TypeError):
+                    pass
+
+        # Save awarded descriptive marks back to attempt
+        attempts_collection.update_one(
+            {"_id": att_obj_id},
+            {"$set": {"descriptive_marks": awarded_marks}}
+        )
+
+        # Recalculate total score: auto-graded questions + teacher-awarded descriptive
+        if exam_doc:
+            auto_score = 0
+            total_marks = 0
+            for qid in exam_doc.get("question_ids", []):
+                q_doc_tmp = questions_collection.find_one({"_id": qid})
+                if not q_doc_tmp:
+                    continue
+                q_id_str2 = str(qid)
+                q_type2 = q_doc_tmp.get("question_type", "MCQ")
+                max_m = int(exam_doc.get("question_marks", {}).get(q_id_str2, q_doc_tmp.get("marks", 1)))
+                total_marks += max_m
+                if q_type2 == "DESCRIPTIVE":
+                    auto_score += awarded_marks.get(q_id_str2, 0)
+                else:
+                    student_ans2 = attempt.get("responses", {}).get(q_id_str2, "")
+                    correct_ans2 = q_doc_tmp.get("correct_answer", "")
+                    if student_ans2 and student_ans2.strip().upper() == correct_ans2.strip().upper():
+                        auto_score += max_m
+
+            passing_marks = exam_doc.get("passing_marks", 0)
+            percentage = round((auto_score / total_marks) * 100, 1) if total_marks > 0 else 0
+            status = "PASSED" if auto_score >= passing_marks else "FAILED"
+
+            results_collection.update_one(
+                {"_id": res_doc["_id"]},
+                {"$set": {
+                    "score": auto_score,
+                    "total_marks": total_marks,
+                    "percentage": percentage,
+                    "status": status,
+                    "teacher_evaluated": True,
+                }}
+            )
+            messages.success(request, f"Descriptive marks saved! Updated score: {auto_score}/{total_marks} ({percentage}%) — {status}")
+
+        return redirect("teacher_submission_review", attempt_id=attempt_id)
+    # ── END POST ────────────────────────────────────────────────────────────
+
     subject_name = "General"
     subject_code = ""
     if exam_doc:
@@ -1326,6 +1396,7 @@ def teacher_submission_review(request, attempt_id):
 
     responses = attempt.get("responses", {})
     question_times = attempt.get("question_times", {})
+    descriptive_marks_awarded = attempt.get("descriptive_marks", {})  # previously saved by teacher
     answer_review = []
 
     if exam_doc:
@@ -1346,7 +1417,7 @@ def teacher_submission_review(request, attempt_id):
                 earned_marks = 0
             elif q_type == "DESCRIPTIVE":
                 outcome = "descriptive"
-                earned_marks = 0
+                earned_marks = int(descriptive_marks_awarded.get(q_id_str, 0))
             elif student_ans.strip().upper() == correct_ans.strip().upper():
                 outcome = "correct"
                 earned_marks = marks
@@ -1356,6 +1427,7 @@ def teacher_submission_review(request, attempt_id):
 
             answer_review.append({
                 "number": i,
+                "q_id_str": q_id_str,
                 "question_text": q_doc.get("question_text", ""),
                 "question_type": q_type,
                 "marks": marks,
@@ -1371,6 +1443,8 @@ def teacher_submission_review(request, attempt_id):
             })
 
     proctor_violations = attempt.get("proctor_violations", [])
+    # Re-fetch result after possible redirect
+    res_doc = results_collection.find_one({"attempt_id": att_obj_id})
 
     return render(request, "teacher_submission_review.html", {
         "attempt": attempt,
@@ -1383,8 +1457,10 @@ def teacher_submission_review(request, attempt_id):
         "correct_count": sum(1 for q in answer_review if q["outcome"] == "correct"),
         "wrong_count": sum(1 for q in answer_review if q["outcome"] == "wrong"),
         "skipped_count": sum(1 for q in answer_review if q["outcome"] == "skipped"),
+        "descriptive_count": sum(1 for q in answer_review if q["outcome"] == "descriptive"),
         "proctor_violations": proctor_violations,
         "violation_count": len(proctor_violations),
+        "attempt_id": attempt_id,
     })
 
 
