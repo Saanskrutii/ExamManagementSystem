@@ -939,6 +939,7 @@ def create_test(request):
             return redirect(f"/teacher/create_test/?subject={sub_id_str}")
 
         selected_q_ids = []
+        custom_question_marks = {}
         total_marks = 0
 
         if assembly_mode == "MANUAL":
@@ -953,7 +954,14 @@ def create_test(request):
                     q_doc = questions_collection.find_one({"_id": q_obj_id})
                     if q_doc:
                         selected_q_ids.append(q_obj_id)
-                        total_marks += int(q_doc.get("marks", 1))
+                        custom_marks_str = request.POST.get(f"marks_{qid}")
+                        if custom_marks_str and custom_marks_str.isdigit():
+                            custom_marks = int(custom_marks_str)
+                        else:
+                            custom_marks = int(q_doc.get("marks", 1))
+                        
+                        custom_question_marks[qid] = custom_marks
+                        total_marks += custom_marks
                 except Exception:
                     pass
 
@@ -961,6 +969,10 @@ def create_test(request):
             num_easy = int(request.POST.get("num_easy", 0) or 0)
             num_medium = int(request.POST.get("num_medium", 0) or 0)
             num_hard = int(request.POST.get("num_hard", 0) or 0)
+            
+            marks_easy = int(request.POST.get("marks_easy", 1) or 1)
+            marks_medium = int(request.POST.get("marks_medium", 2) or 2)
+            marks_hard = int(request.POST.get("marks_hard", 5) or 5)
 
             def sample_questions(difficulty, count):
                 if count <= 0:
@@ -992,9 +1004,20 @@ def create_test(request):
                 messages.error(request, "No questions matched your auto-generation rules in Question Bank. Please add questions first.")
                 return redirect(f"/teacher/create_test/?subject={sub_id_str}")
 
-            for q_doc in all_auto_docs:
+            for q_doc in easy_docs:
                 selected_q_ids.append(q_doc["_id"])
-                total_marks += int(q_doc.get("marks", 1))
+                custom_question_marks[str(q_doc["_id"])] = marks_easy
+                total_marks += marks_easy
+
+            for q_doc in medium_docs:
+                selected_q_ids.append(q_doc["_id"])
+                custom_question_marks[str(q_doc["_id"])] = marks_medium
+                total_marks += marks_medium
+
+            for q_doc in hard_docs:
+                selected_q_ids.append(q_doc["_id"])
+                custom_question_marks[str(q_doc["_id"])] = marks_hard
+                total_marks += marks_hard
 
         now = datetime.utcnow()
         exam_doc = {
@@ -1008,6 +1031,7 @@ def create_test(request):
             "start_time": start_time_str,
             "end_time": end_time_str,
             "question_ids": selected_q_ids,
+            "question_marks": custom_question_marks,
             "assembly_mode": assembly_mode,
             "status": "SCHEDULED",
             "created_at": now,
@@ -1217,7 +1241,7 @@ def teacher_submission_review(request, attempt_id):
             student_ans = responses.get(q_id_str, "")
             correct_ans = q_doc.get("correct_answer", "")
             q_type = q_doc.get("question_type", "MCQ")
-            marks = int(q_doc.get("marks", 1))
+            marks = int(exam_doc.get("question_marks", {}).get(q_id_str, q_doc.get("marks", 1)))
             time_spent = int(question_times.get(q_id_str, 0))
 
             if not student_ans:
@@ -1314,7 +1338,7 @@ def teacher_submission_review(request, attempt_id):
             student_ans = responses.get(q_id_str, "")
             correct_ans = q_doc.get("correct_answer", "")
             q_type = q_doc.get("question_type", "MCQ")
-            marks = int(q_doc.get("marks", 1))
+            marks = int(exam_doc.get("question_marks", {}).get(q_id_str, q_doc.get("marks", 1)))
             time_spent = int(question_times.get(q_id_str, 0))
 
             if not student_ans:

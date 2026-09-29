@@ -421,11 +421,15 @@ def take_exam(request, exam_id):
 
     # Fetch questions list from database using question_ids stored in exam
     q_ids = exam.get("question_ids", [])
+    custom_marks = exam.get("question_marks", {})
     questions_cursor = questions_collection.find({"_id": {"$in": q_ids}})
     
     questions = []
     for q in questions_cursor:
-        q["id"] = str(q["_id"])
+        q_id_str = str(q["_id"])
+        q["id"] = q_id_str
+        if q_id_str in custom_marks:
+            q["marks"] = custom_marks[q_id_str]
         questions.append(q)
 
     # Randomize questions for student cheating prevention
@@ -494,7 +498,8 @@ def submit_exam(request, exam_id):
         for qid in exam.get("question_ids", []):
             q_doc = questions_collection.find_one({"_id": qid})
             if q_doc:
-                q_marks = int(q_doc.get("marks", 1))
+                qid_str = str(qid)
+                q_marks = int(exam.get("question_marks", {}).get(qid_str, q_doc.get("marks", 1)))
                 total_marks += q_marks
 
                 qid_str = str(qid)
@@ -587,7 +592,7 @@ def exam_result(request, result_id):
             student_ans  = responses.get(q_id_str, "")
             correct_ans  = q_doc.get("correct_answer", "")
             q_type       = q_doc.get("question_type", "MCQ")
-            marks        = int(q_doc.get("marks", 1))
+            marks        = int(exam_doc.get("question_marks", {}).get(q_id_str, q_doc.get("marks", 1)))
 
             # Determine outcome
             if not student_ans:

@@ -134,4 +134,3 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Google Gemini API Key (set this as an environment variable or put it in a .env file)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-

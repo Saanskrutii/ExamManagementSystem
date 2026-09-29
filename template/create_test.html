@@ -176,7 +176,11 @@
                             <label for="q_{{ q.id }}" style="cursor: pointer; flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span class="badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span>
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ q.question_type }} ({{ q.marks }} Mark{% if q.marks > 1 %}s{% endif %})</span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ q.question_type }}</label>
+                                        <input type="number" name="marks_{{ q.id }}" value="{{ q.marks|default:1 }}" style="width: 60px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;" min="1" required onclick="event.stopPropagation();" onchange="document.getElementById('q_{{ q.id }}').checked = true;">
+                                        <span style="font-size: 0.85rem; color: #475569;">Marks</span>
+                                    </div>
                                 </div>
                                 <div style="font-weight: 500; color: #0f172a; margin-top: 6px;">{{ q.question_text }}</div>
                             </label>
@@ -198,14 +202,26 @@
                 <div class="form-group" style="margin: 0;">
                     <label for="num_easy" class="form-label">Number of EASY Questions</label>
                     <input type="number" name="num_easy" id="num_easy" class="form-input" value="3" min="0">
+                    <div style="margin-top: 10px;">
+                        <label class="form-label" style="font-size: 0.8rem;">Marks per EASY</label>
+                        <input type="number" name="marks_easy" class="form-input" value="1" min="1">
+                    </div>
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label for="num_medium" class="form-label">Number of MEDIUM Questions</label>
                     <input type="number" name="num_medium" id="num_medium" class="form-input" value="5" min="0">
+                    <div style="margin-top: 10px;">
+                        <label class="form-label" style="font-size: 0.8rem;">Marks per MEDIUM</label>
+                        <input type="number" name="marks_medium" class="form-input" value="2" min="1">
+                    </div>
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label for="num_hard" class="form-label">Number of HARD Questions</label>
                     <input type="number" name="num_hard" id="num_hard" class="form-input" value="2" min="0">
+                    <div style="margin-top: 10px;">
+                        <label class="form-label" style="font-size: 0.8rem;">Marks per HARD</label>
+                        <input type="number" name="marks_hard" class="form-input" value="5" min="1">
+                    </div>
                 </div>
             </div>
         </div>
