@@ -400,7 +400,7 @@ def verify_exam_code(request, exam_id):
 
 @login_required(login_url="login")
 def take_exam(request, exam_id):
-    """
+    """te
     Timed Exam attempt interface with randomized questions.
     """
     try:

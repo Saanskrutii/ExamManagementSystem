@@ -45,93 +45,80 @@ def reassemble_pdf_tokens(raw_text):
     return reconstructed_lines
 
 
-def extract_syllabus_with_gemini(pdf_file):
+def extract_syllabus_with_ollama(raw_text: str) -> list:
     """
-    Fallback for scanned PDFs using Gemini's native document processing capabilities.
+    Sends extracted PDF text to local Ollama / Qwen3 for structured syllabus extraction.
+    No data leaves your machine.
     """
+    import urllib.request
+    import urllib.error
+
+    OLLAMA_URL = "http://localhost:11434/api/generate"
+    OLLAMA_MODEL = "qwen3:4b"
+
+    prompt = f"""You are an academic syllabus parser.
+Analyse the following syllabus text and extract all educational units/chapters/modules.
+Return ONLY a JSON array. Each object MUST have exactly these keys:
+- "unit_number": (integer)
+- "title": (string) title of the unit
+- "description": (string) bullet points or key contents of the unit
+
+Return ONLY the JSON array, no explanation, no markdown fences.
+
+SYLLABUS TEXT:
+{raw_text[:6000]}
+"""
+
+    payload = json.dumps({
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {"temperature": 0.2, "num_predict": 2048},
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        OLLAMA_URL,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
     try:
-        from google import genai
-        from google.genai import types
-    except ImportError as e:
-        print(f"[AI Service] google-genai not installed: {e}")
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            raw_response = body.get("response", "").strip()
+    except urllib.error.URLError as e:
+        print(f"[AI Service] Ollama unreachable: {e}")
         return []
 
-    api_key = getattr(settings, "GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
-    if not api_key:
-        print("[AI Service] GEMINI_API_KEY not set.")
-        return []
-
-    client = genai.Client(api_key=api_key)
-    
-    # Save the in-memory/uploaded file to disk temporarily for Gemini SDK
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        pdf_file.seek(0)
-        tmp.write(pdf_file.read())
-        tmp_path = tmp.name
+    # Strip <think>...</think> blocks (Qwen3 thinking mode)
+    raw_response = re.sub(r"<think>.*?</think>", "", raw_response, flags=re.DOTALL).strip()
+    # Strip markdown fences
+    if raw_response.startswith("```"):
+        raw_response = re.sub(r"^```[a-zA-Z]*\n?", "", raw_response)
+        raw_response = raw_response.rstrip("`").strip()
 
     try:
-        import time
-        gemini_file = client.files.upload(file=tmp_path)
-        
-        # Wait for file to be ready (required for PDFs)
-        gemini_file = client.files.get(name=gemini_file.name)
-        while gemini_file.state.name == "PROCESSING":
-            time.sleep(1)
-            gemini_file = client.files.get(name=gemini_file.name)
-            
-        if gemini_file.state.name == "FAILED":
-            raise Exception("Gemini failed to process the PDF.")
-
-        prompt = """
-        Analyze this syllabus document and extract all the educational units/chapters/modules.
-        Return ONLY a JSON array. Each object in the array MUST have exactly these keys:
-        - "unit_number": (integer)
-        - "title": (string) title of the unit
-        - "description": (string) bullet points or contents of the unit
-        """
-        
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[gemini_file, prompt],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            )
-        )
-        
-        # Cleanup from Gemini storage
-        client.files.delete(name=gemini_file.name)
-        
-        raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:]
-        if raw_text.endswith("```"):
-            raw_text = raw_text[:-3]
-            
-        data = json.loads(raw_text.strip())
-        
-        if isinstance(data, dict):
-            # Sometimes Gemini wraps the array in an object
-            data = data.get("units", data.get("modules", data.get("chapters", [data])))
-            
-        if not isinstance(data, list):
-            data = []
-        
-        # Validate data format
-        result = []
-        for i, item in enumerate(data):
-            if isinstance(item, dict):
-                result.append({
-                    "unit_number": int(item.get("unit_number", i + 1)),
-                    "title": str(item.get("title", f"Unit {i+1}")),
-                    "description": str(item.get("description", ""))
-                })
-        return result
-    except Exception as e:
-        print(f"[AI Service Warning] Gemini PDF extraction failed: {str(e)}")
+        data = json.loads(raw_response)
+    except json.JSONDecodeError as e:
+        print(f"[AI Service Warning] Ollama returned invalid JSON: {e}")
         return []
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+
+    if isinstance(data, dict):
+        data = data.get("units", data.get("modules", data.get("chapters", [data])))
+
+    if not isinstance(data, list):
+        return []
+
+    result = []
+    for i, item in enumerate(data):
+        if isinstance(item, dict):
+            result.append({
+                "unit_number": int(item.get("unit_number", i + 1)),
+                "title": str(item.get("title", f"Unit {i+1}")),
+                "description": str(item.get("description", ""))
+            })
+    return result
 
 
 def extract_syllabus_from_pdf(pdf_file):
@@ -149,12 +136,13 @@ def extract_syllabus_from_pdf(pdf_file):
 
     # If it's a scanned PDF without an OCR text layer, pypdf returns almost nothing 
     # or just watermarks like "Scanned by PDF Scanner".
+    # We send the little text we have to Ollama for best-effort parsing.
     if len(full_text.strip()) < 300 or "scanned by pdf scanner" in full_text.lower():
-        ai_extracted = extract_syllabus_with_gemini(pdf_file)
+        ai_extracted = extract_syllabus_with_ollama(full_text or "(scanned PDF — no text layer found)")
         if ai_extracted:
             return ai_extracted
         else:
-            return [{"unit_number": 999, "title": "DEBUG: Empty AI Result", "description": "Gemini ran but returned empty array."}]
+            return [{"unit_number": 999, "title": "Could Not Extract", "description": "Ollama could not extract syllabus units from this PDF. Please ensure Ollama is running (ollama serve) or upload a text-based PDF."}]
 
     # Re-assemble single-word newlines into clean lines
     lines = reassemble_pdf_tokens(full_text)
