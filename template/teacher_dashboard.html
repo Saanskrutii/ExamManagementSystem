@@ -192,10 +192,9 @@
                     <svg width="120" height="120" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" stroke-width="12"/>
                         <circle cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="12"
-                            stroke-dasharray="{{ pass_rate|floatformat:0 }} 100"
                             stroke-dasharray="314"
-                            stroke-dashoffset="78.5"
-                            style="transition: stroke-dasharray 1s ease;"
+                            stroke-dashoffset="calc(314 - (314 * {{ pass_rate }} / 100))"
+                            style="transition: stroke-dashoffset 1s ease;"
                             transform="rotate(-90 60 60)"/>
                     </svg>
                     <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
