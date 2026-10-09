@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 /* ==========================================================================
    Exam Management System — Design Tokens
    These variables define the shared design language for the entire system.
@@ -6,20 +8,21 @@
    ========================================================================== */
 
 :root {
-    /* Colors */
-    --color-primary: #2563EB;
-    --color-primary-hover: #1D4ED8;
-    --color-primary-light: #EFF6FF;
+    /* Colors - Premium Indigo Theme */
+    --color-primary: #4F46E5;
+    --color-primary-hover: #4338CA;
+    --color-primary-light: #EEF2FF;
+    --color-secondary: #0F172A;
     --color-background: #F8FAFC;
     --color-card: #FFFFFF;
     --color-text: #1E293B;
     --color-text-muted: #64748B;
     --color-border: #E2E8F0;
-    --color-border-focus: #93C5FD;
-    --color-danger: #DC2626;
+    --color-border-focus: #A5B4FC;
+    --color-danger: #EF4444;
 
     /* Typography */
-    --font-family-base: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-family-base: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
     --font-size-lg: 1.125rem;
@@ -40,17 +43,17 @@
     /* Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-full: 999px;
+    --radius-lg: 20px;
+    --radius-full: 9999px;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 20px 40px -12px rgba(15, 23, 42, 0.15);
+    /* Shadows - Soft and modern */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 20px 40px -8px rgba(79, 70, 229, 0.15);
 
     /* Transitions */
     --transition-fast: 150ms ease;
-    --transition-base: 200ms ease;
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==========================================================================
@@ -83,6 +86,21 @@ body {
     align-items: center;
     justify-content: center;
     padding: var(--space-lg);
+    background: linear-gradient(135deg, #EEF2FF 0%, #C7D2FE 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* ==========================================================================
@@ -90,11 +108,16 @@ body {
    ========================================================================== */
 
 .auth-card {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 400px;
-    background-color: var(--color-card);
+    max-width: 440px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     padding: var(--space-2xl) var(--space-xl);
 }
 
@@ -104,11 +127,12 @@ body {
 }
 
 .auth-logo {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     margin: 0 auto var(--space-md);
     border-radius: var(--radius-md);
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -116,16 +140,17 @@ body {
 
 .auth-logo span {
     color: #FFFFFF;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.05em;
 }
 
 .auth-title {
     font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-secondary);
     margin: 0 0 var(--space-xs);
+    letter-spacing: -0.02em;
 }
 
 .auth-subtitle {
@@ -159,14 +184,14 @@ body {
 
 .form-input {
     width: 100%;
-    padding: 12px var(--space-md);
+    padding: 14px var(--space-md);
     font-family: inherit;
     font-size: var(--font-size-base);
     color: var(--color-text);
-    background-color: var(--color-background);
+    background-color: rgba(255, 255, 255, 0.5);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
 }
 
 .form-input::placeholder {
@@ -175,13 +200,14 @@ body {
 
 .form-input:hover {
     border-color: var(--color-border-focus);
+    background-color: #FFFFFF;
 }
 
 .form-input:focus {
     outline: none;
-    background-color: var(--color-card);
+    background-color: #FFFFFF;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-light);
+    box-shadow: 0 0 0 4px var(--color-primary-light);
 }
 
 /* Password field with show/hide toggle */
@@ -299,31 +325,37 @@ body {
    ========================================================================== */
 
 .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
-    padding: 12px var(--space-md);
+    padding: 14px var(--space-md);
     font-family: inherit;
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
     color: #FFFFFF;
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
     cursor: pointer;
-    transition: background-color var(--transition-base), transform var(--transition-fast), box-shadow var(--transition-base);
+    box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.39);
+    transition: var(--transition-base);
 }
 
 .btn-primary:hover {
-    background-color: var(--color-primary-hover);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.23);
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
 }
 
 .btn-primary:active {
-    transform: translateY(1px);
+    transform: translateY(0);
 }
 
 .btn-primary:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--color-primary-light);
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 4px;
 }
 
 /* ==========================================================================
