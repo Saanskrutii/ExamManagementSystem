@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Exams | ExamMS</title>
+    <link rel="stylesheet" href="{% static 'css/basedashboard.css' %}">
+</head>
+<body>
+{% include "partials/sidebar.html" %}
+<div class="main-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+        <div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin: 0;">📋 Offline Exam Papers</h1>
+            <p style="color: #64748b; margin: 4px 0 0;">Create printable question papers and process OMR sheets automatically.</p>
+        </div>
+        <a href="{% url 'create_offline_exam' %}" class="btn-primary" style="text-decoration: none; padding: 10px 20px;">
+            + Create Offline Exam
+        </a>
+    </div>
+
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px;
+        background: {% if 'error' in message.tags %}#fef2f2{% else %}#f0fdf4{% endif %};
+        border: 1px solid {% if 'error' in message.tags %}#fca5a5{% else %}#86efac{% endif %};
+        color: {% if 'error' in message.tags %}#991b1b{% else %}#166534{% endif %}; font-weight: 600;">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+    {% if exams %}
+    <div style="display: grid; gap: 16px;">
+        {% for exam in exams %}
+        <div style="background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">{{ exam.title }}</div>
+                <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+                    📚 {{ exam.subject_name }} &nbsp;|&nbsp; ❓ {{ exam.question_count }} Questions &nbsp;|&nbsp; 🕒 {{ exam.created_at|date:"d M Y" }}
+                </div>
+                <div style="margin-top: 8px; font-size: 0.78rem; color: #94a3b8;">
+                    {{ exam.omr_results|length }} OMR sheet(s) processed
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                <a href="{% url 'offline_exam_paper' exam.id %}" class="btn-outline" style="text-decoration: none; font-size: 0.85rem; padding: 8px 14px;">
+                    🖨️ Print Paper
+                </a>
+                <a href="{% url 'upload_omr' exam.id %}" class="btn-primary" style="text-decoration: none; font-size: 0.85rem; padding: 8px 14px;">
+                    📤 Upload OMR
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 16px; border: 2px dashed #e2e8f0;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">📋</div>
+        <h3 style="color: #1e293b; margin: 0 0 8px;">No offline exams yet</h3>
+        <p style="color: #64748b; margin: 0 0 20px;">Create your first printable question paper to get started.</p>
+        <a href="{% url 'create_offline_exam' %}" class="btn-primary" style="text-decoration: none;">+ Create Offline Exam</a>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

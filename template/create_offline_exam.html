@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Offline Exam | ExamMS</title>
+    <link rel="stylesheet" href="{% static 'css/basedashboard.css' %}">
+    <style>
+        .question-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .question-row:hover { border-color: #93c5fd; background: #eff6ff; }
+        .question-row.selected { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+        .question-row input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; accent-color: #2563eb; }
+        .q-badge {
+            font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+            display: inline-block; margin-right: 4px;
+        }
+        .badge-mcq { background: #eff6ff; color: #1d4ed8; }
+        .badge-tf { background: #f0fdf4; color: #166534; }
+        .badge-desc { background: #fef9c3; color: #854d0e; }
+        .badge-easy { background: #f0fdf4; color: #166534; }
+        .badge-medium { background: #fefce8; color: #854d0e; }
+        .badge-hard { background: #fef2f2; color: #991b1b; }
+        #selectedCount {
+            font-size: 0.9rem; color: #2563eb; font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+{% include "partials/sidebar.html" %}
+<div class="main-content">
+    <div style="margin-bottom: 24px;">
+        <a href="{% url 'offline_exam_list' %}" style="color: #64748b; text-decoration: none; font-size: 0.9rem;">← Back to Offline Exams</a>
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin: 8px 0 4px;">📝 Create Offline Exam Paper</h1>
+        <p style="color: #64748b; margin: 0;">Select questions from your question bank to build a printable exam paper.</p>
+    </div>
+
+    {% for message in messages %}
+    <div style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px;
+        background: {% if 'error' in message.tags %}#fef2f2{% else %}#f0fdf4{% endif %};
+        border: 1px solid {% if 'error' in message.tags %}#fca5a5{% else %}#86efac{% endif %};
+        color: {% if 'error' in message.tags %}#991b1b{% else %}#166534{% endif %}; font-weight: 600;">{{ message }}</div>
+    {% endfor %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Exam Details -->
+        <div style="background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px;">
+            <h2 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 20px;">Exam Details</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label class="form-label">Exam Title *</label>
+                    <input type="text" name="title" class="form-input" placeholder="e.g. Mid-Term Exam - Unit 1 & 2" required>
+                </div>
+                <div>
+                    <label class="form-label">Subject *</label>
+                    <select name="subject_id" class="form-input" required id="subjectFilter">
+                        <option value="">— Select Subject —</option>
+                        {% for sub in subjects %}
+                        <option value="{{ sub.id }}">{{ sub.name }} {% if sub.code %}({{ sub.code }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Instructions (Optional)</label>
+                <textarea name="instructions" class="form-input" rows="3" placeholder="e.g. All questions are compulsory. Each MCQ carries 2 marks. No negative marking."></textarea>
+            </div>
+        </div>
+
+        <!-- Question Selection -->
+        <div style="background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0;">Select Questions</h2>
+                <span id="selectedCount">0 selected</span>
+            </div>
+
+            <!-- Filters -->
+            <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                <select id="filterType" class="form-input" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onchange="filterQuestions()">
+                    <option value="">All Types</option>
+                    <option value="MCQ">MCQ</option>
+                    <option value="TRUE_FALSE">True/False</option>
+                    <option value="DESCRIPTIVE">Descriptive</option>
+                </select>
+                <select id="filterDiff" class="form-input" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onchange="filterQuestions()">
+                    <option value="">All Difficulties</option>
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                </select>
+                <input type="text" id="filterSearch" class="form-input" style="width: 220px; padding: 6px 12px; font-size: 0.85rem;"
+                    placeholder="Search questions..." oninput="filterQuestions()">
+                <button type="button" onclick="selectAll()" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">Select All</button>
+                <button type="button" onclick="clearAll()" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.85rem;">Clear</button>
+            </div>
+
+            <div id="questionList">
+                {% for q in questions %}
+                <div class="question-row" id="qrow_{{ q.id }}"
+                    data-type="{{ q.question_type }}"
+                    data-diff="{{ q.difficulty }}"
+                    data-text="{{ q.question_text|lower }}"
+                    data-subject="{{ q.subject_name }}"
+                    onclick="toggleQuestion(this)">
+                    <input type="checkbox" name="question_ids" value="{{ q.id }}" id="qchk_{{ q.id }}" onclick="event.stopPropagation(); toggleRow(this)">
+                    <div style="flex: 1;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+                            <span class="q-badge badge-{% if q.question_type == 'MCQ' %}mcq{% elif q.question_type == 'TRUE_FALSE' %}tf{% else %}desc{% endif %}">
+                                {{ q.question_type }}
+                            </span>
+                            <span class="q-badge badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span>
+                            <span style="font-size: 0.7rem; color: #94a3b8; padding: 2px 0;">{{ q.subject_name }}</span>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #1e293b; font-weight: 500; line-height: 1.4;">{{ q.question_text }}</div>
+                        {% if q.question_type == 'MCQ' %}
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap;">
+                            <span>A: {{ q.option_a }}</span><span>B: {{ q.option_b }}</span>
+                            <span>C: {{ q.option_c }}</span><span>D: {{ q.option_d }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: #475569;">{{ q.marks }}M</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    No questions found in your question bank. Please add questions first.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align: right;">
+            <button type="submit" class="btn-primary" style="padding: 14px 32px; font-size: 1rem; font-weight: 700;">
+                🖨️ Create & Generate Paper
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleQuestion(row) {
+        const chk = row.querySelector('input[type="checkbox"]');
+        chk.checked = !chk.checked;
+        row.classList.toggle('selected', chk.checked);
+        updateCount();
+    }
+
+    function toggleRow(chk) {
+        const row = document.getElementById('qrow_' + chk.value);
+        if (row) row.classList.toggle('selected', chk.checked);
+        updateCount();
+    }
+
+    function updateCount() {
+        const count = document.querySelectorAll('input[name="question_ids"]:checked').length;
+        document.getElementById('selectedCount').textContent = count + ' selected';
+    }
+
+    function selectAll() {
+        document.querySelectorAll('.question-row:not([style*="display: none"]) input[type="checkbox"]').forEach(chk => {
+            chk.checked = true;
+            const row = document.getElementById('qrow_' + chk.value);
+            if (row) row.classList.add('selected');
+        });
+        updateCount();
+    }
+
+    function clearAll() {
+        document.querySelectorAll('input[name="question_ids"]').forEach(chk => {
+            chk.checked = false;
+            const row = document.getElementById('qrow_' + chk.value);
+            if (row) row.classList.remove('selected');
+        });
+        updateCount();
+    }
+
+    function filterQuestions() {
+        const typeF = document.getElementById('filterType').value.toLowerCase();
+        const diffF = document.getElementById('filterDiff').value.toLowerCase();
+        const searchF = document.getElementById('filterSearch').value.toLowerCase();
+
+        document.querySelectorAll('.question-row').forEach(row => {
+            const type = (row.dataset.type || '').toLowerCase();
+            const diff = (row.dataset.diff || '').toLowerCase();
+            const text = (row.dataset.text || '').toLowerCase();
+
+            const matchType = !typeF || type === typeF;
+            const matchDiff = !diffF || diff === diffF;
+            const matchSearch = !searchF || text.includes(searchF);
+
+            row.style.display = (matchType && matchDiff && matchSearch) ? '' : 'none';
+        });
+    }
+</script>
+</body>
+</html>

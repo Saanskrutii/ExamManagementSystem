@@ -27,6 +27,7 @@ questions_collection = db["teacher_question"]
 exams_collection = db["teacher_exam"]
 attempts_collection = db["student_attempt"]
 results_collection = db["student_result"]
+offline_exams_collection = db["teacher_offline_exam"]   # Offline OMR paper store
 
 
 def get_db():

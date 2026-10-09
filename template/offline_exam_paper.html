@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ exam.title }} — Question Paper</title>
+    <style>
+        /* ── Screen styles (action bar at top) ── */
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            color: #000;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .no-print {
+            background: #1e3a8a;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 10px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .no-print h2 { margin: 0; font-size: 1rem; font-family: Arial, sans-serif; }
+        .no-print p { margin: 4px 0 0; font-size: 0.8rem; opacity: 0.8; font-family: Arial, sans-serif; }
+
+        .print-btn {
+            background: #ffffff;
+            color: #1e3a8a;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            flex-shrink: 0;
+        }
+
+        .omr-btn {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+
+        /* ── The paper itself ── */
+        .paper {
+            background: #ffffff;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 56px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            min-height: 1100px;
+        }
+
+        /* Header */
+        .paper-header {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        .paper-header .institution { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
+        .paper-header .exam-title { font-size: 16pt; font-weight: bold; margin: 8px 0 4px; }
+        .paper-header .subject { font-size: 12pt; }
+
+        /* Student info box */
+        .student-info-box {
+            border: 1px solid #000;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .info-field { border-bottom: 1px solid #000; padding-bottom: 4px; }
+        .info-label { font-size: 9pt; color: #333; font-weight: bold; }
+        .info-line { height: 18px; }
+
+        /* Instructions */
+        .instructions-box {
+            border: 1px solid #000;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            font-size: 10pt;
+        }
+        .instructions-box strong { display: block; margin-bottom: 6px; font-size: 11pt; }
+
+        /* Questions */
+        .section-title {
+            font-size: 11pt;
+            font-weight: bold;
+            text-decoration: underline;
+            text-transform: uppercase;
+            margin: 20px 0 12px;
+        }
+
+        .question-item {
+            margin-bottom: 18px;
+            page-break-inside: avoid;
+        }
+        .question-text {
+            font-size: 11pt;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+        .question-number {
+            display: inline-block;
+            min-width: 24px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 24px;
+            margin: 8px 0 0 28px;
+            font-size: 10.5pt;
+        }
+        .option-item { display: flex; gap: 8px; align-items: baseline; }
+        .bubble {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #000;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .answer-line {
+            border-bottom: 1px solid #aaa;
+            margin: 6px 0 0 28px;
+            height: 22px;
+        }
+        .marks-tag {
+            float: right;
+            font-size: 9.5pt;
+            color: #444;
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Footer */
+        .paper-footer {
+            margin-top: 40px;
+            border-top: 2px solid #000;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            color: #333;
+        }
+
+        /* ── Print media styles ── */
+        @media print {
+            body { background: #fff; padding: 0; }
+            .no-print { display: none !important; }
+            .paper {
+                box-shadow: none;
+                padding: 24px 36px;
+                max-width: 100%;
+                min-height: auto;
+            }
+            @page {
+                margin: 16mm 14mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Screen-only action bar ── -->
+    <div class="no-print">
+        <div>
+            <h2>🖨️ Printable Question Paper Ready</h2>
+            <p>Click "Print / Save as PDF" to download or print. Use Ctrl+P (Windows) or ⌘+P (Mac).</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'upload_omr' exam_id %}" class="omr-btn">📤 Upload OMR Sheets</a>
+            <button onclick="window.print()" class="print-btn">🖨️ Print / Save as PDF</button>
+        </div>
+    </div>
+
+    <!-- ── The actual Paper ── -->
+    <div class="paper">
+
+        <!-- Header -->
+        <div class="paper-header">
+            <div class="institution">Examination Management System</div>
+            <div class="exam-title">{{ exam.title }}</div>
+            <div class="subject">Subject: {{ exam.subject_name }}{% if exam.subject_code %} ({{ exam.subject_code }}){% endif %}
+                &nbsp;|&nbsp; Total Questions: {{ questions|length }}
+                &nbsp;|&nbsp; Date: _______________</div>
+        </div>
+
+        <!-- Student Info -->
+        <div class="student-info-box">
+            <div class="info-field">
+                <div class="info-label">Student Name:</div>
+                <div class="info-line"></div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Roll Number / PEN:</div>
+                <div class="info-line"></div>
+            </div>
+            <div class="info-field">
+                <div class="info-label">Division / Class:</div>
+                <div class="info-line"></div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        {% if exam.instructions %}
+        <div class="instructions-box">
+            <strong>📌 Instructions:</strong>
+            {{ exam.instructions }}
+        </div>
+        {% else %}
+        <div class="instructions-box">
+            <strong>📌 General Instructions:</strong>
+            All questions are compulsory. Read each question carefully before answering.
+            For MCQ questions, fill in the bubble next to your chosen option.
+            Use blue or black pen only.
+        </div>
+        {% endif %}
+
+        <!-- Questions -->
+        <div class="section-title">Questions</div>
+
+        {% for q in questions %}
+        <div class="question-item">
+            <div class="question-text">
+                <span class="marks-tag">[{{ q.marks }} Mark{% if q.marks > 1 %}s{% endif %}]</span>
+                <span class="question-number">{{ q.number }}.</span>
+                {{ q.question_text }}
+            </div>
+
+            {% if q.question_type == 'MCQ' %}
+            <div class="options-grid">
+                <div class="option-item"><div class="bubble"></div> <span><strong>A.</strong> {{ q.option_a }}</span></div>
+                <div class="option-item"><div class="bubble"></div> <span><strong>B.</strong> {{ q.option_b }}</span></div>
+                <div class="option-item"><div class="bubble"></div> <span><strong>C.</strong> {{ q.option_c }}</span></div>
+                <div class="option-item"><div class="bubble"></div> <span><strong>D.</strong> {{ q.option_d }}</span></div>
+            </div>
+
+            {% elif q.question_type == 'TRUE_FALSE' %}
+            <div class="options-grid">
+                <div class="option-item"><div class="bubble"></div> <span><strong>A.</strong> True</span></div>
+                <div class="option-item"><div class="bubble"></div> <span><strong>B.</strong> False</span></div>
+            </div>
+
+            {% else %}
+            <!-- Descriptive answer lines -->
+            <div style="margin-left: 28px; margin-top: 8px;">
+                {% for i in "123456" %}
+                <div class="answer-line"></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Footer -->
+        <div class="paper-footer">
+            <span>📋 {{ exam.title }}</span>
+            <span>— End of Paper —</span>
+            <span>ExamMS | Confidential</span>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -15,6 +15,7 @@ from config.db import (
     exams_collection,
     attempts_collection,
     results_collection,
+    offline_exams_collection,
 )
 from .utils import extract_syllabus_from_pdf
 from .validators import validate_teacher_subject_access, validate_teacher_unit_access, sanitize_input_string, get_user_id_variants
@@ -1905,5 +1906,275 @@ def edit_exam(request, exam_id):
             messages.success(request, f"Exam '{title}' updated successfully!")
             return redirect("scheduled_exams")
 
+
     exam["id"] = str(exam["_id"])
     return render(request, "edit_exam.html", {"exam": exam})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OFFLINE OMR EXAM SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@login_required(login_url="login")
+def offline_exam_list(request):
+    """Lists all offline exams created by this teacher."""
+    sub_query = get_teacher_subjects_query(request.user)
+    teacher_subject_ids = [s["_id"] for s in subjects_collection.find(sub_query, {"_id": 1})]
+
+    raw_exams = list(offline_exams_collection.find(
+        {"subject_id": {"$in": teacher_subject_ids}}
+    ).sort("created_at", -1))
+
+    exams = []
+    for e in raw_exams:
+        sub = subjects_collection.find_one({"_id": e.get("subject_id")})
+        e["id"] = str(e["_id"])
+        e["subject_name"] = sub.get("name", "—") if sub else "—"
+        e["question_count"] = len(e.get("question_ids", []))
+        exams.append(e)
+
+    return render(request, "offline_exam_list.html", {"exams": exams})
+
+
+@login_required(login_url="login")
+def create_offline_exam(request):
+    """
+    Teacher selects subject, title, instructions, and picks questions
+    from the question bank to form a printable offline exam paper.
+    """
+    sub_query = get_teacher_subjects_query(request.user)
+    teacher_subjects = list(subjects_collection.find(sub_query))
+    for s in teacher_subjects:
+        s["id"] = str(s["_id"])
+
+    if request.method == "POST":
+        title = sanitize_input_string(request.POST.get("title", "").strip())
+        instructions = request.POST.get("instructions", "").strip()
+        subject_id_str = request.POST.get("subject_id", "")
+        question_ids_str = request.POST.getlist("question_ids")
+
+        if not title or not subject_id_str or not question_ids_str:
+            messages.error(request, "Please fill all fields and select at least one question.")
+        else:
+            try:
+                subject_obj_id = ObjectId(subject_id_str)
+                q_obj_ids = [ObjectId(qid) for qid in question_ids_str]
+            except Exception:
+                messages.error(request, "Invalid subject or question selection.")
+                return redirect("create_offline_exam")
+
+            answer_key = {}
+            for qid in q_obj_ids:
+                qdoc = questions_collection.find_one({"_id": qid})
+                if qdoc:
+                    answer_key[str(qid)] = qdoc.get("correct_answer", "")
+
+            offline_exam_doc = {
+                "title": title,
+                "instructions": instructions,
+                "subject_id": subject_obj_id,
+                "question_ids": q_obj_ids,
+                "answer_key": answer_key,
+                "created_by_id": request.user.id,
+                "created_at": datetime.utcnow(),
+                "omr_results": [],
+            }
+            result = offline_exams_collection.insert_one(offline_exam_doc)
+            messages.success(request, f"Offline exam '{title}' created! Now print the question paper.")
+            return redirect("offline_exam_paper", exam_id=str(result.inserted_id))
+
+    sub_ids = [s["_id"] for s in teacher_subjects]
+    all_questions = list(questions_collection.find(
+        {"subject_id": {"$in": sub_ids}, "is_deleted": {"$ne": True}}
+    ))
+    for q in all_questions:
+        q["id"] = str(q["_id"])
+        sub = subjects_collection.find_one({"_id": q.get("subject_id")})
+        q["subject_name"] = sub.get("name", "—") if sub else "—"
+
+    return render(request, "create_offline_exam.html", {
+        "subjects": teacher_subjects,
+        "questions": all_questions,
+    })
+
+
+@login_required(login_url="login")
+def offline_exam_paper(request, exam_id):
+    """
+    Renders a clean, printer-friendly question paper.
+    Teacher opens this page and uses Ctrl+P to print / save as PDF.
+    """
+    try:
+        exam_obj_id = ObjectId(exam_id)
+    except Exception:
+        return redirect("offline_exam_list")
+
+    exam_doc = offline_exams_collection.find_one({"_id": exam_obj_id})
+    if not exam_doc:
+        messages.error(request, "Offline exam not found.")
+        return redirect("offline_exam_list")
+
+    sub = subjects_collection.find_one({"_id": exam_doc.get("subject_id")})
+    exam_doc["subject_name"] = sub.get("name", "—") if sub else "—"
+    exam_doc["subject_code"] = sub.get("code", "") if sub else ""
+
+    questions = []
+    for i, qid in enumerate(exam_doc.get("question_ids", []), start=1):
+        q = questions_collection.find_one({"_id": qid})
+        if q:
+            q["number"] = i
+            questions.append(q)
+
+    return render(request, "offline_exam_paper.html", {
+        "exam": exam_doc,
+        "questions": questions,
+        "exam_id": exam_id,
+    })
+
+
+@login_required(login_url="login")
+def upload_omr(request, exam_id):
+    """
+    Teacher uploads scanned OMR sheet image(s).
+    Uses LLaVA (vision model) via Ollama to:
+      1. Read the student Roll Number / PEN from the sheet header.
+      2. Detect filled bubbles (A/B/C/D) for each question.
+      3. Cross-check against the answer key and compute score.
+    """
+    import base64
+    import urllib.request as _urllib_req
+
+    try:
+        exam_obj_id = ObjectId(exam_id)
+    except Exception:
+        return redirect("offline_exam_list")
+
+    exam_doc = offline_exams_collection.find_one({"_id": exam_obj_id})
+    if not exam_doc:
+        messages.error(request, "Offline exam not found.")
+        return redirect("offline_exam_list")
+
+    sub = subjects_collection.find_one({"_id": exam_doc.get("subject_id")})
+    exam_doc["subject_name"] = sub.get("name", "—") if sub else "—"
+
+    if request.method == "POST":
+        uploaded_files = request.FILES.getlist("omr_sheets")
+        if not uploaded_files:
+            messages.error(request, "Please upload at least one OMR sheet image.")
+        else:
+            new_results = []
+            answer_key = exam_doc.get("answer_key", {})
+            total_questions = len(exam_doc.get("question_ids", []))
+
+            for uploaded_file in uploaded_files:
+                image_bytes = uploaded_file.read()
+                image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+
+                prompt = f"""You are an OMR sheet reader. Analyze this scanned OMR answer sheet image.
+
+This exam has {total_questions} questions, each with options A, B, C, or D.
+
+Extract:
+1. The student Roll Number or PEN number from the top of the sheet.
+2. The filled bubble (A, B, C, or D) for each question number.
+
+Return ONLY valid JSON:
+{{
+    "roll_number": "student roll number here",
+    "answers": {{
+        "1": "A",
+        "2": "B"
+    }}
+}}
+
+Rules:
+- roll_number: string (use "UNKNOWN" if unreadable)
+- answers: key is question number (string), value is filled bubble letter
+- Skip questions where bubble is not filled or unreadable
+- Return ONLY the JSON, no explanation"""
+
+                try:
+                    payload = json.dumps({
+                        "model": "llava",
+                        "prompt": prompt,
+                        "images": [image_b64],
+                        "stream": False,
+                        "options": {"temperature": 0.1, "num_predict": 512},
+                    }).encode("utf-8")
+
+                    req = _urllib_req.Request(
+                        "http://localhost:11434/api/generate",
+                        data=payload,
+                        headers={"Content-Type": "application/json"},
+                        method="POST",
+                    )
+                    with _urllib_req.urlopen(req, timeout=120) as resp:
+                        body = json.loads(resp.read().decode("utf-8"))
+                        raw_response = body.get("response", "").strip()
+
+                    raw_response = re.sub(r"<think>.*?</think>", "", raw_response, flags=re.DOTALL).strip()
+                    if raw_response.startswith("```"):
+                        raw_response = re.sub(r"^```[a-zA-Z]*\n?", "", raw_response)
+                        raw_response = raw_response.rstrip("`").strip()
+
+                    parsed = json.loads(raw_response)
+                    roll_number = str(parsed.get("roll_number", "UNKNOWN")).strip()
+                    student_answers = {str(k): str(v).upper().strip() for k, v in parsed.get("answers", {}).items()}
+
+                except Exception as e:
+                    new_results.append({
+                        "file_name": uploaded_file.name,
+                        "roll_number": "ERROR",
+                        "score": 0,
+                        "total": total_questions,
+                        "percentage": 0,
+                        "status": "ERROR",
+                        "error": str(e),
+                        "answers": {},
+                        "processed_at": datetime.utcnow().isoformat(),
+                    })
+                    continue
+
+                score = 0
+                detailed_results = {}
+                for idx, qid in enumerate(exam_doc.get("question_ids", []), start=1):
+                    q_id_str = str(qid)
+                    correct = answer_key.get(q_id_str, "").strip().upper()
+                    student_ans = student_answers.get(str(idx), "")
+                    is_correct = (student_ans == correct) if student_ans and correct else False
+                    if is_correct:
+                        score += 1
+                    detailed_results[str(idx)] = {
+                        "student_ans": student_ans or "—",
+                        "correct_ans": correct,
+                        "is_correct": is_correct,
+                    }
+
+                percentage = round((score / total_questions) * 100, 1) if total_questions > 0 else 0
+
+                new_results.append({
+                    "file_name": uploaded_file.name,
+                    "roll_number": roll_number,
+                    "score": score,
+                    "total": total_questions,
+                    "percentage": percentage,
+                    "status": "PASSED" if percentage >= 40 else "FAILED",
+                    "answers": detailed_results,
+                    "processed_at": datetime.utcnow().isoformat(),
+                })
+
+            offline_exams_collection.update_one(
+                {"_id": exam_obj_id},
+                {"$push": {"omr_results": {"$each": new_results}}}
+            )
+            messages.success(request, f"Processed {len(new_results)} OMR sheet(s) successfully!")
+            return redirect("upload_omr", exam_id=exam_id)
+
+    exam_doc = offline_exams_collection.find_one({"_id": exam_obj_id})
+    omr_results = exam_doc.get("omr_results", []) if exam_doc else []
+
+    return render(request, "upload_omr.html", {
+        "exam": exam_doc,
+        "exam_id": exam_id,
+        "omr_results": omr_results,
+    })

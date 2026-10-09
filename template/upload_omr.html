@@ -1,0 +1,238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload OMR Sheets | {{ exam.title }}</title>
+    <link rel="stylesheet" href="{% static 'css/basedashboard.css' %}">
+    <style>
+        .drop-zone {
+            border: 2.5px dashed #93c5fd;
+            border-radius: 14px;
+            background: #eff6ff;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+        .result-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .progress-bar-wrap { background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+    </style>
+</head>
+<body>
+{% include "partials/sidebar.html" %}
+<div class="main-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div>
+            <a href="{% url 'offline_exam_list' %}" style="color: #64748b; text-decoration: none; font-size: 0.9rem;">← Back to Offline Exams</a>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin: 8px 0 4px;">📤 Upload OMR Sheets</h1>
+            <p style="color: #64748b; margin: 0;">{{ exam.title }} &nbsp;|&nbsp; <strong>{{ exam.subject_name }}</strong></p>
+        </div>
+        <a href="{% url 'offline_exam_paper' exam_id %}" class="btn-outline" style="text-decoration: none;">🖨️ View / Print Paper</a>
+    </div>
+
+    {% for message in messages %}
+    <div style="margin: 14px 0; padding: 12px 16px; border-radius: 8px;
+        background: {% if 'error' in message.tags %}#fef2f2{% else %}#f0fdf4{% endif %};
+        border: 1px solid {% if 'error' in message.tags %}#fca5a5{% else %}#86efac{% endif %};
+        color: {% if 'error' in message.tags %}#991b1b{% else %}#166534{% endif %}; font-weight: 600;">{{ message }}</div>
+    {% endfor %}
+
+    <!-- How it works banner -->
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; gap: 14px;">
+        <span style="font-size: 1.5rem;">🤖</span>
+        <div>
+            <strong style="color: #1d4ed8; font-size: 0.95rem;">LLaVA Vision AI (Local / Private)</strong>
+            <p style="margin: 4px 0 0; color: #475569; font-size: 0.85rem;">
+                Upload scanned OMR sheets as images (JPG/PNG). The local LLaVA model will automatically read the
+                <strong>Roll Number / PEN</strong> from the top and detect the <strong>filled bubble answers</strong>
+                for each question. Your data never leaves your machine.
+            </p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+        <!-- Upload Form -->
+        <div>
+            <h2 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 16px;">Upload Sheets</h2>
+            <form method="POST" enctype="multipart/form-data" id="omrForm">
+                {% csrf_token %}
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" name="omr_sheets" id="fileInput" multiple accept="image/*" onchange="handleFileSelect(this)">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">📄</div>
+                    <div style="font-weight: 700; color: #1e3a8a; font-size: 1rem;">Click to upload OMR sheets</div>
+                    <div style="color: #64748b; font-size: 0.85rem; margin-top: 6px;">Supports JPG, PNG — Upload multiple sheets at once</div>
+                </div>
+                <div id="filePreview" style="margin-top: 12px; display: none;">
+                    <div style="font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 8px;" id="fileCount"></div>
+                    <div id="fileList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+                <button type="submit" id="uploadBtn" class="btn-primary" style="width: 100%; margin-top: 16px; padding: 12px; font-size: 1rem; font-weight: 700; display: none;">
+                    🤖 Process with LLaVA AI
+                </button>
+            </form>
+
+            <!-- Processing spinner (shown on submit) -->
+            <div id="processingMsg" style="display: none; text-align: center; margin-top: 16px; padding: 20px; background: #eff6ff; border-radius: 10px; border: 1px solid #bfdbfe;">
+                <div style="font-size: 2rem; animation: spin 1s linear infinite; display: inline-block;">⚙️</div>
+                <div style="font-weight: 700; color: #1d4ed8; margin-top: 8px;">LLaVA is reading the OMR sheets...</div>
+                <div style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">This may take 30–60 seconds per sheet.</div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div>
+            <h2 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 16px;">
+                Results Summary
+                <span style="font-size: 0.8rem; color: #64748b; font-weight: 400;">({{ omr_results|length }} processed)</span>
+            </h2>
+
+            {% if omr_results %}
+            {% with total=omr_results|length %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #166534;">
+                        {% with passed=omr_results|length %}{{ passed }}{% endwith %}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #166534; font-weight: 600;">Total Processed</div>
+                </div>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #1d4ed8;">{{ exam.question_ids|length }}</div>
+                    <div style="font-size: 0.8rem; color: #1d4ed8; font-weight: 600;">Questions / Paper</div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endif %}
+
+            <div style="font-size: 0.8rem; color: #94a3b8; font-style: italic; background: #f8fafc; border-radius: 8px; padding: 10px 14px;">
+                💡 Tip: Make sure students fill bubbles clearly and write their Roll Number legibly at the top for best AI accuracy.
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    {% if omr_results %}
+    <div style="margin-top: 32px;">
+        <h2 style="font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 16px;">📊 Processed OMR Results</h2>
+        {% for result in omr_results reversed %}
+        <div class="result-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #1e293b;">
+                        Roll No: <span style="color: #2563eb;">{{ result.roll_number }}</span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: #64748b; margin-top: 3px;">
+                        File: {{ result.file_name }} &nbsp;|&nbsp; Processed: {{ result.processed_at|slice:":19" }}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.2rem; font-weight: 800; color: {% if result.status == 'PASSED' %}#166534{% elif result.status == 'FAILED' %}#991b1b{% else %}#92400e{% endif %};">
+                        {{ result.score }} / {{ result.total }}
+                    </span>
+                    <div style="font-size: 0.8rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 4px; display: inline-block;
+                        background: {% if result.status == 'PASSED' %}#dcfce7{% elif result.status == 'FAILED' %}#fee2e2{% else %}#fef3c7{% endif %};
+                        color: {% if result.status == 'PASSED' %}#166534{% elif result.status == 'FAILED' %}#991b1b{% else %}#92400e{% endif %};">
+                        {% if result.status == 'ERROR' %}⚠ ERROR{% else %}{{ result.status }}{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if result.status == 'ERROR' %}
+            <div style="margin-top: 10px; background: #fef2f2; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; color: #991b1b;">
+                ⚠ LLaVA could not process this sheet: {{ result.error }}
+            </div>
+            {% else %}
+            <!-- Score bar -->
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width: {{ result.percentage }}%;
+                    background: {% if result.percentage >= 60 %}#22c55e{% elif result.percentage >= 40 %}#eab308{% else %}#ef4444{% endif %};"></div>
+            </div>
+            <div style="font-size: 0.78rem; color: #94a3b8; text-align: right; margin-top: 2px;">{{ result.percentage }}%</div>
+
+            <!-- Per-question breakdown (collapsed by default) -->
+            {% if result.answers %}
+            <details style="margin-top: 10px;">
+                <summary style="font-size: 0.82rem; color: #2563eb; cursor: pointer; font-weight: 600;">View Question-wise Answers</summary>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+                    {% for q_num, ans_detail in result.answers.items %}
+                    <div style="padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+                        background: {% if ans_detail.is_correct %}#dcfce7{% else %}#fee2e2{% endif %};
+                        color: {% if ans_detail.is_correct %}#166534{% else %}#991b1b{% endif %};
+                        border: 1px solid {% if ans_detail.is_correct %}#86efac{% else %}#fca5a5{% endif %};">
+                        Q{{ q_num }}: {{ ans_detail.student_ans }} {% if ans_detail.is_correct %}✓{% else %}✗ ({{ ans_detail.correct_ans }}){% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+</style>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('fileInput').files = files;
+        handleFileSelect({ files: files });
+    });
+
+    function handleFileSelect(input) {
+        const files = input.files || input;
+        if (!files.length) return;
+
+        const preview = document.getElementById('filePreview');
+        const list = document.getElementById('fileList');
+        const count = document.getElementById('fileCount');
+        const btn = document.getElementById('uploadBtn');
+
+        preview.style.display = 'block';
+        btn.style.display = 'block';
+        count.textContent = files.length + ' file(s) selected';
+        list.innerHTML = '';
+
+        Array.from(files).forEach(f => {
+            const chip = document.createElement('div');
+            chip.style.cssText = 'background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:600;';
+            chip.textContent = '📄 ' + f.name;
+            list.appendChild(chip);
+        });
+    }
+
+    document.getElementById('omrForm').addEventListener('submit', () => {
+        document.getElementById('uploadBtn').style.display = 'none';
+        document.getElementById('processingMsg').style.display = 'block';
+    });
+</script>
+</body>
+</html>

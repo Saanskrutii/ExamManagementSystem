@@ -42,4 +42,10 @@ urlpatterns = [
 
     # Exam Edit URL
     path("exam/edit/<str:exam_id>/", views.edit_exam, name="edit_exam"),
+
+    # Offline OMR Exam System
+    path("offline_exams/", views.offline_exam_list, name="offline_exam_list"),
+    path("offline_exams/create/", views.create_offline_exam, name="create_offline_exam"),
+    path("offline_exams/<str:exam_id>/paper/", views.offline_exam_paper, name="offline_exam_paper"),
+    path("offline_exams/<str:exam_id>/upload_omr/", views.upload_omr, name="upload_omr"),
 ]
