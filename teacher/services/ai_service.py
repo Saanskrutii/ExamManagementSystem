@@ -13,7 +13,7 @@ import urllib.request
 import urllib.error
 
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "qwen3:4b"   # change to "qwen3-no-think:latest" if you prefer
+OLLAMA_MODEL = "llava"   # Using LLaVA for both text and future vision tasks
 
 
 def _ollama_chat(prompt: str, temperature: float = 0.3) -> str:

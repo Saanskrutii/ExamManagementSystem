@@ -54,7 +54,7 @@ def extract_syllabus_with_ollama(raw_text: str) -> list:
     import urllib.error
 
     OLLAMA_URL = "http://localhost:11434/api/generate"
-    OLLAMA_MODEL = "qwen3:4b"
+    OLLAMA_MODEL = "llava"
 
     prompt = f"""You are an academic syllabus parser.
 Analyse the following syllabus text and extract all educational units/chapters/modules.
