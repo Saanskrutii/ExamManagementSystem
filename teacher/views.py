@@ -1,4 +1,6 @@
 import json
+import re
+import math
 from datetime import datetime
 from bson import ObjectId
 from django.shortcuts import render, redirect, get_object_or_404
@@ -18,6 +20,103 @@ from .utils import extract_syllabus_from_pdf
 from .validators import validate_teacher_subject_access, validate_teacher_unit_access, sanitize_input_string, get_user_id_variants
 from .decorators import require_teacher_subject_access, require_subject_access
 from .services.ai_service import AIQuestionGeneratorService
+
+
+# ── Plagiarism Detection Helper ───────────────────────────────────────────────
+def _tokenize(text: str) -> list[str]:
+    """Lowercases, removes punctuation, splits into word tokens."""
+    return re.sub(r"[^\w\s]", "", text.lower()).split()
+
+
+def _tfidf_cosine_similarity(text_a: str, text_b: str) -> float:
+    """
+    Computes TF-IDF cosine similarity between two texts.
+    Returns a float in [0.0, 1.0] — higher means more similar / plagiarised.
+    """
+    if not text_a or not text_b:
+        return 0.0
+
+    tokens_a = _tokenize(text_a)
+    tokens_b = _tokenize(text_b)
+    if not tokens_a or not tokens_b:
+        return 0.0
+
+    # Build vocabulary
+    vocab = set(tokens_a) | set(tokens_b)
+
+    def tf(tokens, word):
+        return tokens.count(word) / len(tokens) if tokens else 0
+
+    # Simple TF-IDF (IDF across 2-doc corpus)
+    def idf(word):
+        docs_with = sum(1 for t in [tokens_a, tokens_b] if word in t)
+        return math.log((2 + 1) / (docs_with + 1)) + 1  # smoothed
+
+    def vec(tokens):
+        return {w: tf(tokens, w) * idf(w) for w in vocab}
+
+    vec_a = vec(tokens_a)
+    vec_b = vec(tokens_b)
+
+    dot   = sum(vec_a[w] * vec_b[w] for w in vocab)
+    norm_a = math.sqrt(sum(v ** 2 for v in vec_a.values()))
+    norm_b = math.sqrt(sum(v ** 2 for v in vec_b.values()))
+
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def compute_plagiarism_score(student_answer: str, question_id_str: str, current_attempt_id) -> dict:
+    """
+    Compares student_answer against ALL other submitted descriptive answers
+    for the same question across the same exam.
+
+    Returns:
+        {
+            "pct": int (0-100),         # Highest similarity found
+            "matched_student": str,     # Username/email of most similar student (or None)
+            "level": str                # "low" | "medium" | "high"
+        }
+    """
+    if not student_answer or not student_answer.strip():
+        return {"pct": 0, "matched_student": None, "level": "low"}
+
+    # Fetch all OTHER submitted attempts that have a response for this question
+    other_attempts = attempts_collection.find({
+        "_id": {"$ne": current_attempt_id},
+        "is_submitted": True,
+        f"responses.{question_id_str}": {"$exists": True, "$ne": ""}
+    }, {"responses": 1, "student_id": 1})
+
+    max_sim = 0.0
+    matched_student_id = None
+
+    for other in other_attempts:
+        other_ans = other.get("responses", {}).get(question_id_str, "")
+        if not other_ans or not other_ans.strip():
+            continue
+        sim = _tfidf_cosine_similarity(student_answer, other_ans)
+        if sim > max_sim:
+            max_sim = sim
+            matched_student_id = other.get("student_id")
+
+    pct = min(100, round(max_sim * 100))
+
+    # Resolve student display name
+    matched_student = None
+    if matched_student_id:
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            u = User.objects.filter(id=matched_student_id).first()
+            if u:
+                matched_student = u.get_full_name() or u.username or u.email
+        except Exception:
+            pass
+
+    level = "low" if pct < 40 else ("medium" if pct < 70 else "high")
+    return {"pct": pct, "matched_student": matched_student, "level": level}
 
 
 def is_admin_or_superuser(user):
@@ -1425,6 +1524,11 @@ def teacher_submission_review(request, attempt_id):
                 outcome = "wrong"
                 earned_marks = 0
 
+            # ── Plagiarism check for descriptive answers ───────────────────
+            plagiarism = {"pct": 0, "matched_student": None, "level": "low"}
+            if q_type == "DESCRIPTIVE" and student_ans and student_ans != "—":
+                plagiarism = compute_plagiarism_score(student_ans, q_id_str, att_obj_id)
+
             answer_review.append({
                 "number": i,
                 "q_id_str": q_id_str,
@@ -1440,6 +1544,9 @@ def teacher_submission_review(request, attempt_id):
                 "option_b": q_doc.get("option_b", ""),
                 "option_c": q_doc.get("option_c", ""),
                 "option_d": q_doc.get("option_d", ""),
+                "plagiarism_pct": plagiarism["pct"],
+                "plagiarism_matched": plagiarism["matched_student"],
+                "plagiarism_level": plagiarism["level"],
             })
 
     proctor_violations = attempt.get("proctor_violations", [])
